@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+client/.next/
+client/out/
+server/dist/
+server/build/
+
+# Environment files
+server/.env
+.env
+.env.local
+.env.production
+
+# Uploads (user-generated content)
+server/uploads/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Memory bank (optional - uncomment if you don't want to push it)
+# memory-bank/
