@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import api from '@/lib/api';
 
 const slides = [
   {
@@ -81,6 +82,16 @@ const popularDoctors = [
 export default function HomePage() {
   const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [siteContent, setSiteContent] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    api.get('/content').then(r => setSiteContent(r.data.data || {})).catch(() => {});
+  }, []);
+
+  const hero = siteContent.hero;
+  const featuresContent = siteContent.features;
+  const statsContent = siteContent.stats;
+  const ctaContent = siteContent.cta;
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -102,8 +113,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center min-h-[480px] py-16">
             <div className="animate-fade-in">
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">{slides[currentSlide].title}</h1>
-              <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-lg">{slides[currentSlide].subtitle}</p>
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">{hero?.title || slides[currentSlide].title}</h1>
+              <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-lg">{hero?.subtitle || slides[currentSlide].subtitle}</p>
               <div className="flex flex-wrap gap-4">
                 <Link href={slides[currentSlide].ctaLink} className="bg-white text-gray-900 px-8 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg hover:scale-105 transform duration-200">{slides[currentSlide].cta}</Link>
                 <Link href={slides[currentSlide].cta2Link} className="border-2 border-white/60 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition-colors">{slides[currentSlide].cta2}</Link>
@@ -163,8 +174,8 @@ export default function HomePage() {
       <section className="py-16 bg-gradient-to-b from-green-50 to-emerald-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-slide-up">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Why Choose MediCare+?</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">Experience healthcare reimagined with cutting-edge technology and compassionate care</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">{featuresContent?.title || 'Why Choose MediCare+?'}</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">{featuresContent?.subtitle || 'Experience healthcare reimagined with cutting-edge technology and compassionate care'}</p>
           </div>
           <div className="grid md:grid-cols-4 gap-6">
             {features.map((f, i) => (
@@ -395,8 +406,8 @@ export default function HomePage() {
           <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-white rounded-full animate-float animation-delay-300"></div>
         </div>
         <div className="max-w-4xl mx-auto text-center px-4 relative z-10 animate-slide-up">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Take Control of Your Health?</h2>
-          <p className="text-primary-100 mb-8 text-lg max-w-2xl mx-auto">Join thousands of patients who trust MediCare+ for their healthcare needs. Get started today for free.</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">{ctaContent?.title || 'Ready to Take Control of Your Health?'}</h2>
+          <p className="text-primary-100 mb-8 text-lg max-w-2xl mx-auto">{ctaContent?.subtitle || 'Join thousands of patients who trust MediCare+ for their healthcare needs. Get started today for free.'}</p>
           <div className="flex flex-wrap justify-center gap-4">
             {!user && (
               <Link href="/register" className="bg-white text-primary-700 px-8 py-4 rounded-xl font-semibold hover:bg-primary-50 hover:scale-105 transition-all shadow-lg text-lg">Get Started Free</Link>

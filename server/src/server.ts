@@ -21,6 +21,7 @@ import favoriteRoutes from './routes/favorite.routes';
 import symptomRoutes from './routes/symptom.routes';
 import adminRoutes from './routes/admin.routes';
 import notificationRoutes from './routes/notification.routes';
+import contentRoutes from './routes/content.routes';
 import { setupSocketIO } from './socket/socket.handler';
 
 const app = express();
@@ -66,6 +67,7 @@ app.use('/api/v1/favorites', favoriteRoutes);
 app.use('/api/v1/symptoms', symptomRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/content', contentRoutes);
 
 // Error handling middleware
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
