@@ -79,10 +79,25 @@ const popularDoctors = [
   { name: 'Dr. David Kim', specialty: 'Orthopedic Surgeon', rating: 4.7, reviews: 278, experience: 16, fee: 850, image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&h=300&fit=crop', available: true },
 ];
 
+const faqs = [
+  { question: 'What is MediCare+?', answer: 'MediCare+ is an online platform for integrated healthcare services where patients can connect with qualified doctors, book appointments, and access a wide range of healthcare solutions including telemedicine, prescriptions, and medicine delivery.' },
+  { question: 'What services does MediCare+ provide?', answer: 'MediCare+ offers a wide range of convenient healthcare services:\n\n• Doctor Appointments\n• Telemedicine (Doctor consultation over video/voice call)\n• Digital Prescriptions\n• Online Medicine Ordering\n• AI-Powered Symptom Checker\n• Hospital & Diagnostic Information\n• Home Sample Collection\n• Physiotherapy Services\n• Doctor Chat & Video Consultation' },
+  { question: "How much do doctors' consultations on MediCare+ cost?", answer: "The fee for consultations is decided by the individual doctor. We have no control over the price. You can view each doctor's consultation fee on their profile before booking." },
+  { question: "I don't know a lot about technology. What shall I do to get a doctor's appointment?", answer: "It's not just for people who are tech-savvy. Usability has been our key area of attention. Simply use our search option and enter the name of the physician, their area of expertise, or the illness you have. When you see the appointment button and the doctor's brief bio, click it. Follow the instructions and soon you will receive an appointment confirmation." },
+  { question: 'Do you provide ambulance services outside of Dhaka?', answer: 'Yes. We provide nationwide service coverage across Bangladesh.' },
+  { question: 'What type of ambulance services does MediCare+ provide?', answer: 'We currently offer both domestic ground ambulance and air ambulance services:\n\n• Basic / Non-AC Ambulance Service\n• Life Support / ICU Ambulance Service\n• Freezing / Mortuary Ambulance Service\n• Neonatal / NICU Ambulance Service\n• Patient Transport Vehicle\n• Air Ambulance Service' },
+  { question: 'Is Telemedicine Right for Me?', answer: "It depends on your health/medical condition and urgency. Telemedicine makes it possible to access healthcare more swiftly and locally. It reduces waiting and travel times. Telemedicine gives you instant support at your sudden critical moment or a follow-up meeting with a doctor. Since telemedicine may not always be acceptable, you might require a medical expert's assistance to decide whether it is appropriate." },
+  { question: 'Do you offer free home sample collection?', answer: "It depends on the service providers associated with us. Some offer free sample collections, some don't. If home collection is not possible then we will provide you with the nearest center details." },
+  { question: 'Can physiotherapy treatment be performed at home?', answer: "Yes, it's easy to call a physiotherapist at home and take treatment from a registered doctor at your convenient place. Book through our platform and our service will reach you quickly." },
+  { question: 'Why Reserve a Doctor Appointment at MediCare+?', answer: 'Here is why booking at MediCare+ is essential:\n\n• Service is Priceworthy\n• Fast and Hassle-free Online Booking\n• Prompt Service of Specialized Doctors\n• Consult via Video/Voice Call\n• Show Reports to Doctors Instantly\n• Ambulance Service (AC, ICU, or AIR)\n• Rich-quality Diagnostic Care\n• 365/24/7 Service\n• Instant Prescription Delivery\n• Home Physiotherapy Service' },
+  { question: 'What are the benefits of booking a Doctor Appointment at MediCare+?', answer: 'MediCare+ is a powerful online platform for integrated healthcare:\n\n• Reserve Appointment Online\n• Instant Contact (Video / Voice Call)\n• Health Checkup Package\n• Hospital & Diagnostic Information\n• Medical Instruments Rental\n• Diagnostic Home Service\n• Home Physiotherapy Service\n• Lab Test Sample Collection from Home\n• And Much More' },
+];
+
 export default function HomePage() {
   const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [siteContent, setSiteContent] = useState<Record<string, any>>({});
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
     api.get('/content').then(r => setSiteContent(r.data.data || {})).catch(() => {});
@@ -394,6 +409,55 @@ export default function HomePage() {
               <span>View All Doctors</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== FAQ SECTION ========== */}
+      <section className="py-20 bg-gradient-to-b from-gray-50 to-slate-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 animate-slide-up">
+            <span className="text-primary-600 font-semibold text-sm uppercase tracking-wider">❓ Got Questions?</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">Frequently Asked Questions</h2>
+            <p className="text-gray-500 mt-3 max-w-xl mx-auto">Find answers to common questions about our telemedicine platform and healthcare services</p>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, index) => (
+              <div key={index} className={'bg-white rounded-2xl border transition-all duration-300 overflow-hidden ' + (openFaq === index ? 'border-primary-200 shadow-lg shadow-primary-100/50' : 'border-gray-100 hover:border-gray-200 hover:shadow-md')}>
+                <button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="w-full flex items-center justify-between px-6 py-5 text-left">
+                  <div className="flex items-center space-x-4 flex-1 min-w-0">
+                    <div className={'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold transition-colors ' + (openFaq === index ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500')}>{index + 1}</div>
+                    <h3 className={'text-sm md:text-base font-semibold transition-colors ' + (openFaq === index ? 'text-primary-700' : 'text-gray-900')}>{faq.question}</h3>
+                  </div>
+                  <div className={'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ml-4 transition-all duration-300 ' + (openFaq === index ? 'bg-primary-100 rotate-180' : 'bg-gray-50')}>
+                    <svg className={'w-4 h-4 transition-colors ' + (openFaq === index ? 'text-primary-600' : 'text-gray-400')} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </button>
+                <div className={'transition-all duration-300 ease-in-out ' + (openFaq === index ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0')}>
+                  <div className="px-6 pb-5 pt-0">
+                    <div className="ml-12">
+                      <div className="border-t border-gray-100 pt-4">
+                        <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{faq.answer}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center animate-slide-up">
+            <p className="text-gray-500 text-sm mb-4">Still have questions? We're here to help!</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/chat" className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-colors hover:scale-105 transform duration-200">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                <span>Chat with Us</span>
+              </Link>
+              <Link href="/symptom-checker" className="inline-flex items-center space-x-2 px-6 py-3 border-2 border-primary-200 text-primary-700 rounded-xl font-semibold hover:bg-primary-50 transition-colors">
+                <span>Check Symptoms</span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
