@@ -13,7 +13,7 @@ class _MedicinesScreenState extends State<MedicinesScreen> {
   String _search = '';
   @override void initState() { super.initState(); _load(); }
   Future<void> _load() async {
-    try { final r = await ApiService.get('/medicines'); setState(() { _medicines = (r['data']['medicines'] as List).map((e) => Medicine.fromJson(e)).toList(); _loading = false; }); }
+    try { final r = await ApiService.get('/medicines'); setState(() { _medicines = (r['data'] as List).map((e) => Medicine.fromJson(e)).toList(); _loading = false; }); }
     catch (_) { setState(() => _loading = false); }
   }
   @override

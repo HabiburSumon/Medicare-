@@ -16,7 +16,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   Future<void> _loadDoctors() async {
     try {
       final response = await ApiService.get('/doctors');
-      final list = response['data']['doctors'] as List;
+      final list = response['data'] as List;
       setState(() { _doctors = list.map((e) => Doctor.fromJson(e)).toList(); _loading = false; });
     } catch (_) { setState(() => _loading = false); }
   }
@@ -34,7 +34,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
             leading: CircleAvatar(radius: 30, backgroundColor: const Color(0xFF2563EB).withOpacity(0.1), child: Text(filtered[i].name[0], style: const TextStyle(color: Color(0xFF2563EB), fontSize: 20, fontWeight: FontWeight.bold))),
             title: Text(filtered[i].name, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(filtered[i].specialization),
-            trailing: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('\$${filtered[i].fee}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2563EB))), Text('${filtered[i].experience} yrs', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))]),
+            trailing: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('৳${filtered[i].consultationFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2563EB))), Text('${filtered[i].experience} yrs exp', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))]),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DoctorDetailScreen(doctor: filtered[i]))),
           )),
         )),

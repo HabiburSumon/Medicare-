@@ -1,25 +1,57 @@
 class Doctor {
   final String id;
   final String name;
+  final String email;
+  final String? avatar;
   final String specialization;
-  final double rating;
-  final int reviews;
   final int experience;
-  final double fee;
-  final String? image;
+  final String qualification;
   final String? bio;
-  final bool available;
-  Doctor({required this.id, required this.name, required this.specialization, this.rating = 0, this.reviews = 0, this.experience = 0, this.fee = 0, this.image, this.bio, this.available = true});
-  factory Doctor.fromJson(Map<String, dynamic> json) => Doctor(
-    id: json['user']?['_id'] ?? json['_id'] ?? '',
-    name: json['user']?['name'] ?? json['name'] ?? 'Doctor',
-    specialization: json['specialization'] ?? 'General',
-    rating: (json['averageRating'] ?? json['rating'] ?? 0).toDouble(),
-    reviews: json['totalReviews'] ?? json['reviews'] ?? 0,
-    experience: json['experience'] ?? 0,
-    fee: (json['consultationFee'] ?? json['fee'] ?? 0).toDouble(),
-    image: json['user']?['avatar'] ?? json['image'],
-    bio: json['bio'] ?? '',
-    available: json['isAvailable'] ?? json['available'] ?? true,
-  );
+  final double consultationFee;
+  final double rating;
+  final int totalReviews;
+  final bool isAvailable;
+  final List<String> availableDays;
+
+  Doctor({
+    required this.id,
+    required this.name,
+    this.email = '',
+    this.avatar,
+    required this.specialization,
+    required this.experience,
+    this.qualification = '',
+    this.bio,
+    required this.consultationFee,
+    required this.rating,
+    required this.totalReviews,
+    this.isAvailable = true,
+    this.availableDays = const [],
+  });
+
+  factory Doctor.fromJson(Map<String, dynamic> json) {
+    String name = '';
+    String email = '';
+    String? avatar;
+    if (json['user'] is Map) {
+      name = json['user']['name'] ?? '';
+      email = json['user']['email'] ?? '';
+      avatar = json['user']['avatar'];
+    }
+    return Doctor(
+      id: json['_id'] ?? '',
+      name: name,
+      email: email,
+      avatar: avatar,
+      specialization: json['specialization'] ?? '',
+      experience: json['experience'] ?? 0,
+      qualification: json['qualification'] ?? '',
+      bio: json['bio'],
+      consultationFee: (json['consultationFee'] ?? 0).toDouble(),
+      rating: (json['rating'] ?? 0).toDouble(),
+      totalReviews: json['totalReviews'] ?? 0,
+      isAvailable: json['isAvailable'] ?? true,
+      availableDays: List<String>.from(json['availableDays'] ?? []),
+    );
+  }
 }
