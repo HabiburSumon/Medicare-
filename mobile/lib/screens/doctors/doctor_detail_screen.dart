@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../models/doctor.dart';
 import '../../services/api_service.dart';
@@ -28,7 +29,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   Widget build(BuildContext context) {
     final d = widget.doctor;
     return Scaffold(appBar: AppBar(title: const Text('Doctor Profile')), body: SingleChildScrollView(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Center(child: Column(children: [CircleAvatar(radius: 45, backgroundColor: const Color(0xFF2563EB).withOpacity(0.1), child: Text(d.name[0], style: const TextStyle(color: Color(0xFF2563EB), fontSize: 32, fontWeight: FontWeight.bold))), const SizedBox(height: 12), Text(d.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)), Text(d.specialization, style: const TextStyle(color: Color(0xFF6B7280)))])),
+      Center(child: Column(children: [CircleAvatar(radius: 45, backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1), backgroundImage: d.avatar != null && d.avatar!.isNotEmpty ? CachedNetworkImageProvider(d.avatar!) : null, child: (d.avatar == null || d.avatar!.isEmpty) ? Text(d.name.isNotEmpty ? d.name[0] : 'D', style: const TextStyle(color: Color(0xFF2563EB), fontSize: 32, fontWeight: FontWeight.bold)) : null), const SizedBox(height: 12), Text(d.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)), Text(d.specialization, style: const TextStyle(color: Color(0xFF6B7280)))])),
       const SizedBox(height: 24), Row(children: [Expanded(child: _i('${d.experience}', 'Yrs Exp')), Expanded(child: _i('${d.totalReviews}', 'Reviews')), Expanded(child: _i('\u09F3${d.consultationFee.toStringAsFixed(0)}', 'Fee'))]),
       const SizedBox(height: 24), const Text('Select Date', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 8),
       OutlinedButton(onPressed: () async { final dt = await showDatePicker(context: context, initialDate: _selectedDate, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 30))); if (dt != null) setState(() => _selectedDate = dt); }, child: Text(_selectedDate.toIso8601String().split('T')[0])),

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../models/doctor.dart';
 import '../../services/api_service.dart';
@@ -31,7 +32,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
           padding: const EdgeInsets.all(16), itemCount: filtered.length,
           itemBuilder: (_, i) => Card(margin: const EdgeInsets.only(bottom: 12), child: ListTile(
             contentPadding: const EdgeInsets.all(12),
-            leading: CircleAvatar(radius: 30, backgroundColor: const Color(0xFF2563EB).withOpacity(0.1), child: Text(filtered[i].name[0], style: const TextStyle(color: Color(0xFF2563EB), fontSize: 20, fontWeight: FontWeight.bold))),
+            leading: CircleAvatar(radius: 30, backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1), backgroundImage: filtered[i].avatar != null && filtered[i].avatar!.isNotEmpty ? CachedNetworkImageProvider(filtered[i].avatar!) : null, child: (filtered[i].avatar == null || filtered[i].avatar!.isEmpty) ? Text(filtered[i].name.isNotEmpty ? filtered[i].name[0] : 'D', style: const TextStyle(color: Color(0xFF2563EB), fontSize: 20, fontWeight: FontWeight.bold)) : null),
             title: Text(filtered[i].name, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(filtered[i].specialization),
             trailing: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('৳${filtered[i].consultationFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2563EB))), Text('${filtered[i].experience} yrs exp', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))]),

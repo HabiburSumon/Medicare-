@@ -176,13 +176,26 @@ const seedDatabase = async () => {
     const doctorUsers = [];
     const doctorProfiles = [];
 
-    for (const doc of doctorData) {
+    const doctorAvatars = [
+      'https://randomuser.me/api/portraits/women/44.jpg',
+      'https://randomuser.me/api/portraits/men/32.jpg',
+      'https://randomuser.me/api/portraits/women/68.jpg',
+      'https://randomuser.me/api/portraits/men/75.jpg',
+      'https://randomuser.me/api/portraits/women/90.jpg',
+      'https://randomuser.me/api/portraits/men/22.jpg',
+      'https://randomuser.me/api/portraits/women/50.jpg',
+      'https://randomuser.me/api/portraits/men/60.jpg',
+    ];
+
+    for (let di = 0; di < doctorData.length; di++) {
+      const doc = doctorData[di];
       const user = await User.create({
         name: doc.name,
         email: doc.email,
         password: 'password123',
         role: 'doctor',
         phone: doc.phone,
+        avatar: doctorAvatars[di] || '',
         isVerified: true,
         isActive: true,
       });
@@ -292,18 +305,18 @@ const seedDatabase = async () => {
 
     // ==================== MEDICINES ====================
     const medicines = [
-      { name: 'Paracetamol 500mg', genericName: 'Paracetamol', category: 'Pain Relief', price: 50, manufacturer: 'Square Pharma', description: 'Effective for fever and mild to moderate pain', inStock: true, dosageForm: 'Tablet', strength: '500mg', requiresPrescription: false },
-      { name: 'Amoxicillin 250mg', genericName: 'Amoxicillin', category: 'Antibiotics', price: 120, manufacturer: 'Beximco Pharma', description: 'Broad-spectrum antibiotic for bacterial infections', inStock: true, dosageForm: 'Capsule', strength: '250mg', requiresPrescription: true },
-      { name: 'Omeprazole 20mg', genericName: 'Omeprazole', category: 'Gastrointestinal', price: 80, manufacturer: 'Incepta Pharma', description: 'Reduces stomach acid for acid reflux treatment', inStock: true, dosageForm: 'Capsule', strength: '20mg', requiresPrescription: false },
-      { name: 'Metformin 500mg', genericName: 'Metformin', category: 'Diabetes', price: 60, manufacturer: 'Square Pharma', description: 'Controls blood sugar levels in type 2 diabetes', inStock: true, dosageForm: 'Tablet', strength: '500mg', requiresPrescription: true },
-      { name: 'Amlodipine 5mg', genericName: 'Amlodipine', category: 'Blood Pressure', price: 70, manufacturer: 'Opsonin Pharma', description: 'Calcium channel blocker for high blood pressure', inStock: true, dosageForm: 'Tablet', strength: '5mg', requiresPrescription: true },
-      { name: 'Cetirizine 10mg', genericName: 'Cetirizine', category: 'Allergy', price: 40, manufacturer: 'Eskayef Pharma', description: 'Antihistamine for allergy relief', inStock: true, dosageForm: 'Tablet', strength: '10mg', requiresPrescription: false },
-      { name: 'Azithromycin 500mg', genericName: 'Azithromycin', category: 'Antibiotics', price: 180, manufacturer: 'Beximco Pharma', description: 'Macrolide antibiotic for various infections', inStock: true, dosageForm: 'Tablet', strength: '500mg', requiresPrescription: true },
-      { name: 'Pantoprazole 40mg', genericName: 'Pantoprazole', category: 'Gastrointestinal', price: 90, manufacturer: 'ACI Pharma', description: 'Proton pump inhibitor for gastric acid reduction', inStock: true, dosageForm: 'Tablet', strength: '40mg', requiresPrescription: false },
-      { name: 'Losartan 50mg', genericName: 'Losartan', category: 'Blood Pressure', price: 85, manufacturer: 'Square Pharma', description: 'Angiotensin receptor blocker for hypertension', inStock: true, dosageForm: 'Tablet', strength: '50mg', requiresPrescription: true },
-      { name: 'Montelukast 10mg', genericName: 'Montelukast', category: 'Respiratory', price: 95, manufacturer: 'Incepta Pharma', description: 'Leukotriene receptor antagonist for asthma prevention', inStock: true, dosageForm: 'Tablet', strength: '10mg', requiresPrescription: true },
-      { name: 'Vitamin D3 1000IU', genericName: 'Cholecalciferol', category: 'Supplements', price: 150, manufacturer: 'Nutrify Pharma', description: 'Essential vitamin for bone health and immunity', inStock: true, dosageForm: 'Capsule', strength: '1000IU', requiresPrescription: false },
-      { name: 'Ibuprofen 400mg', genericName: 'Ibuprofen', category: 'Pain Relief', price: 55, manufacturer: 'Opsonin Pharma', description: 'NSAID for pain, inflammation and fever', inStock: true, dosageForm: 'Tablet', strength: '400mg', requiresPrescription: false },
+      { name: 'Paracetamol 500mg', genericName: 'Paracetamol', category: 'Pain Relief', price: 50, manufacturer: 'Square Pharma', description: 'Effective for fever and mild to moderate pain', inStock: true, dosageForm: 'Tablet', strength: '500mg', requiresPrescription: false, image: 'https://5.imimg.com/data5/SELLER/Default/2022/11/TY/OA/ZM/7706660/paracetamol-tablets-500mg-500x500.png' },
+      { name: 'Amoxicillin 250mg', genericName: 'Amoxicillin', category: 'Antibiotics', price: 120, manufacturer: 'Beximco Pharma', description: 'Broad-spectrum antibiotic for bacterial infections', inStock: true, dosageForm: 'Capsule', strength: '250mg', requiresPrescription: true, image: 'https://5.imimg.com/data5/SELLER/Default/2022/4/XS/GU/GN/7706660/amoxicillin-capsules-250mg-500x500.png' },
+      { name: 'Omeprazole 20mg', genericName: 'Omeprazole', category: 'Gastrointestinal', price: 80, manufacturer: 'Incepta Pharma', description: 'Reduces stomach acid for acid reflux treatment', inStock: true, dosageForm: 'Capsule', strength: '20mg', requiresPrescription: false, image: 'https://5.imimg.com/data5/SELLER/Default/2022/8/MB/VK/TT/7706660/omeprazole-capsules-20mg-500x500.png' },
+      { name: 'Metformin 500mg', genericName: 'Metformin', category: 'Diabetes', price: 60, manufacturer: 'Square Pharma', description: 'Controls blood sugar levels in type 2 diabetes', inStock: true, dosageForm: 'Tablet', strength: '500mg', requiresPrescription: true, image: 'https://5.imimg.com/data5/SELLER/Default/2022/6/KB/RA/7706660/metformin-tablets-500mg-500x500.png' },
+      { name: 'Amlodipine 5mg', genericName: 'Amlodipine', category: 'Blood Pressure', price: 70, manufacturer: 'Opsonin Pharma', description: 'Calcium channel blocker for high blood pressure', inStock: true, dosageForm: 'Tablet', strength: '5mg', requiresPrescription: true, image: 'https://5.imimg.com/data5/SELLER/Default/2022/3/ZN/YP/7706660/amlodipine-tablets-5mg-500x500.png' },
+      { name: 'Cetirizine 10mg', genericName: 'Cetirizine', category: 'Allergy', price: 40, manufacturer: 'Eskayef Pharma', description: 'Antihistamine for allergy relief', inStock: true, dosageForm: 'Tablet', strength: '10mg', requiresPrescription: false, image: 'https://5.imimg.com/data5/SELLER/Default/2022/7/XU/CM/7706660/cetirizine-tablets-10mg-500x500.png' },
+      { name: 'Azithromycin 500mg', genericName: 'Azithromycin', category: 'Antibiotics', price: 180, manufacturer: 'Beximco Pharma', description: 'Macrolide antibiotic for various infections', inStock: true, dosageForm: 'Tablet', strength: '500mg', requiresPrescription: true, image: 'https://5.imimg.com/data5/SELLER/Default/2022/5/VR/BK/GH/7706660/azithromycin-tablets-500mg-500x500.png' },
+      { name: 'Pantoprazole 40mg', genericName: 'Pantoprazole', category: 'Gastrointestinal', price: 90, manufacturer: 'ACI Pharma', description: 'Proton pump inhibitor for gastric acid reduction', inStock: true, dosageForm: 'Tablet', strength: '40mg', requiresPrescription: false, image: 'https://5.imimg.com/data5/SELLER/Default/2022/9/TA/EB/CD/7706660/pantoprazole-tablets-40mg-500x500.png' },
+      { name: 'Losartan 50mg', genericName: 'Losartan', category: 'Blood Pressure', price: 85, manufacturer: 'Square Pharma', description: 'Angiotensin receptor blocker for hypertension', inStock: true, dosageForm: 'Tablet', strength: '50mg', requiresPrescription: true, image: 'https://5.imimg.com/data5/SELLER/Default/2022/4/PL/TF/7706660/losartan-tablets-50mg-500x500.png' },
+      { name: 'Montelukast 10mg', genericName: 'Montelukast', category: 'Respiratory', price: 95, manufacturer: 'Incepta Pharma', description: 'Leukotriene receptor antagonist for asthma prevention', inStock: true, dosageForm: 'Tablet', strength: '10mg', requiresPrescription: true, image: 'https://5.imimg.com/data5/SELLER/Default/2022/8/YS/QP/EF/7706660/montelukast-tablets-10mg-500x500.png' },
+      { name: 'Vitamin D3 1000IU', genericName: 'Cholecalciferol', category: 'Supplements', price: 150, manufacturer: 'Nutrify Pharma', description: 'Essential vitamin for bone health and immunity', inStock: true, dosageForm: 'Capsule', strength: '1000IU', requiresPrescription: false, image: 'https://5.imimg.com/data5/SELLER/Default/2022/10/BN/HJ/KL/7706660/vitamin-d3-capsules-1000iu-500x500.png' },
+      { name: 'Ibuprofen 400mg', genericName: 'Ibuprofen', category: 'Pain Relief', price: 55, manufacturer: 'Opsonin Pharma', description: 'NSAID for pain, inflammation and fever', inStock: true, dosageForm: 'Tablet', strength: '400mg', requiresPrescription: false, image: 'https://5.imimg.com/data5/SELLER/Default/2022/11/WQ/MN/OP/7706660/ibuprofen-tablets-400mg-500x500.png' },
     ];
 
     for (const med of medicines) {
