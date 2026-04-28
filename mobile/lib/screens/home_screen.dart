@@ -169,7 +169,7 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                   _quickActionBtn(Icons.psychology, 'Symptom\nCheck', const Color(0xFFF59E0B), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SymptomCheckerScreen()))),
                   _quickActionBtn(Icons.receipt_long, 'My\nPrescriptions', const Color(0xFF8B5CF6), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrescriptionsScreen()))),
                 ]))),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(child: const SizedBox(height: 24)),
 
                 // CATEGORIES
                 SliverToBoxAdapter(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -193,7 +193,7 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                   return _productCard(m);
                 }, childCount: _medicines.length > 6 ? 6 : _medicines.length))),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(child: const SizedBox(height: 24)),
 
                 // TOP DOCTORS
                 SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -201,7 +201,7 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                   TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DoctorsScreen())), child: const Text('See All')),
                 ]))),
                 SliverToBoxAdapter(child: SizedBox(height: 160, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: _doctors.length > 8 ? 8 : _doctors.length, itemBuilder: (_, i) => _doctorCard(_doctors[i])))),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(child: const SizedBox(height: 24)),
 
                 // HEALTH PRODUCTS BANNER
                 SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -254,7 +254,7 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                   const SizedBox(height: 24),
                 ]))),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                SliverToBoxAdapter(child: const SizedBox(height: 80)),
               ],
             ),
     );
