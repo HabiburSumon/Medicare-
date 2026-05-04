@@ -86,18 +86,60 @@ export const uploadHeroMedia = async (req: AuthRequest, res: Response): Promise<
     const ext = path.extname(req.file.originalname).toLowerCase();
     const mediaType = videoExts.includes(ext) ? 'video' : 'image';
 
-    // Update hero section with media info
-    const content = await WebsiteContent.findOneAndUpdate(
-      { section: 'hero' },
-      {
-        section: 'hero',
-        image: mediaUrl,
-        settings: { mediaType, mediaUrl },
-      },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
+    const newSlide = { url: mediaUrl, mediaType, createdAt: new Date().toISOString() };
 
-    res.json({ success: true, data: content, mediaUrl, mediaType });
+    // Get or create hero section, then push slide to array
+    let content = await WebsiteContent.findOne({ section: 'hero' });
+    if (!content) {
+      content = await WebsiteContent.create({
+        section: 'hero',
+        title: 'Your Health, Our Priority',
+        subtitle: 'Book appointments with top doctors, consult online, and get prescriptions.',
+        settings: { slides: [newSlide] },
+      });
+    } else {
+      const slides: any[] = content.get('settings')?.slides || [];
+      slides.push(newSlide);
+      content.set('settings', { ...content.get('settings'), slides });
+      if (!content.image && slides.length > 0) content.image = slides[0].url;
+      await content.save();
+    }
+
+    res.json({ success: true, data: content, slide: newSlide });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteHeroMedia = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { slideIndex } = req.params;
+    const content = await WebsiteContent.findOne({ section: 'hero' });
+    if (!content) { res.status(404).json({ success: false, message: 'Hero section not found' }); return; }
+
+    const settings = content.get('settings') || {};
+    const slides: any[] = settings.slides || [];
+    const idx = parseInt(slideIndex, 10);
+    if (isNaN(idx) || idx < 0 || idx >= slides.length) {
+      res.status(400).json({ success: false, message: 'Invalid slide index' }); return;
+    }
+
+    // Delete file from disk
+    const slide = slides[idx];
+    if (slide?.url) {
+      const filename = slide.url.split('/hero/')[1];
+      if (filename) {
+        const filePath = path.join(heroUploadDir, filename);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+    }
+
+    slides.splice(idx, 1);
+    content.set('settings', { ...settings, slides });
+    content.image = slides.length > 0 ? slides[0].url : '';
+    await content.save();
+
+    res.json({ success: true, data: content, message: 'Slide deleted' });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

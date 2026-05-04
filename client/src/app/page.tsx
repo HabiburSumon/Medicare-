@@ -108,30 +108,38 @@ export default function HomePage() {
   const statsContent = siteContent.stats;
   const ctaContent = siteContent.cta;
 
+  const heroSlidesCount = hero?.settings?.slides?.length || 0;
+  const totalSlides = heroSlidesCount > 0 ? heroSlidesCount : slides.length;
+
   const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  }, []);
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+  }, [totalSlides]);
 
   const prevSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  }, []);
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }, [totalSlides]);
 
   useEffect(() => {
     const timer = setInterval(nextSlide, 5000);
     return () => clearInterval(timer);
   }, [nextSlide]);
 
+  // Reset currentSlide if it exceeds total slides
+  useEffect(() => {
+    if (currentSlide >= totalSlides) setCurrentSlide(0);
+  }, [totalSlides, currentSlide]);
+
   return (
     <div>
       {/* ========== HERO BANNER ========== */}
-      {hero?.image ? (
-        /* Hero with uploaded media background */
+      {(hero?.settings?.slides?.length > 0) ? (
+        /* Hero with uploaded media slides */
         <section className="relative text-white min-h-[560px] flex items-center overflow-hidden">
           {/* Background media */}
-          {hero?.settings?.mediaType === 'video' ? (
-            <video src={hero.image} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+          {hero.settings.slides[currentSlide]?.mediaType === 'video' ? (
+            <video key={currentSlide} src={hero.settings.slides[currentSlide].url} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700" />
           ) : (
-            <img src={hero.image} alt="Hero Background" className="absolute inset-0 w-full h-full object-cover" />
+            <img key={currentSlide} src={hero.settings.slides[currentSlide].url} alt={`Slide ${currentSlide + 1}`} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700" />
           )}
           {/* Overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
@@ -158,6 +166,22 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+          {/* Slide navigation */}
+          {hero.settings.slides.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center space-x-4">
+              <button onClick={prevSlide} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors backdrop-blur-sm" aria-label="Previous slide">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <div className="flex space-x-2">
+                {hero.settings.slides.map((_: any, idx: number) => (
+                  <button key={idx} onClick={() => setCurrentSlide(idx)} className={'h-2 rounded-full transition-all duration-300 ' + (idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60')} aria-label={'Go to slide ' + (idx + 1)} />
+                ))}
+              </div>
+              <button onClick={nextSlide} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors backdrop-blur-sm" aria-label="Next slide">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
         </section>
       ) : (
         /* Default hero slider (fallback) */
