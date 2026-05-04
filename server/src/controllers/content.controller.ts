@@ -98,9 +98,11 @@ export const uploadHeroMedia = async (req: AuthRequest, res: Response): Promise<
         settings: { slides: [newSlide] },
       });
     } else {
-      const slides: any[] = content.get('settings')?.slides || [];
+      const existingSettings = content.settings || {};
+      const slides: any[] = existingSettings.slides || [];
       slides.push(newSlide);
-      content.set('settings', { ...content.get('settings'), slides });
+      content.settings = { ...existingSettings, slides };
+      content.markModified('settings');
       if (!content.image && slides.length > 0) content.image = slides[0].url;
       await content.save();
     }
@@ -117,7 +119,7 @@ export const deleteHeroMedia = async (req: AuthRequest, res: Response): Promise<
     const content = await WebsiteContent.findOne({ section: 'hero' });
     if (!content) { res.status(404).json({ success: false, message: 'Hero section not found' }); return; }
 
-    const settings = content.get('settings') || {};
+    const settings = content.settings || {};
     const slides: any[] = settings.slides || [];
     const idx = parseInt(slideIndex, 10);
     if (isNaN(idx) || idx < 0 || idx >= slides.length) {
@@ -135,7 +137,8 @@ export const deleteHeroMedia = async (req: AuthRequest, res: Response): Promise<
     }
 
     slides.splice(idx, 1);
-    content.set('settings', { ...settings, slides });
+    content.settings = { ...settings, slides };
+    content.markModified('settings');
     content.image = slides.length > 0 ? slides[0].url : '';
     await content.save();
 
