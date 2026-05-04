@@ -1,6 +1,33 @@
 import { Response } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import WebsiteContent from '../models/WebsiteContent';
 import { AuthRequest } from '../middleware/auth';
+
+// Ensure uploads/hero directory exists
+const heroUploadDir = path.join(__dirname, '../../uploads/hero');
+if (!fs.existsSync(heroUploadDir)) { fs.mkdirSync(heroUploadDir, { recursive: true }); }
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, heroUploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `hero-${Date.now()}${ext}`);
+  },
+});
+
+export const heroUpload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB for videos
+  fileFilter: (_req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif|webp|mp4|webm|mov|avi/;
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowed.test(file.mimetype.split('/')[1]) || file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/');
+    if (ext && mime) cb(null, true);
+    else cb(new Error('Only image and video files are allowed'));
+  },
+});
 
 export const getAllContent = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -42,6 +69,35 @@ export const deleteContent = async (req: AuthRequest, res: Response): Promise<vo
     const content = await WebsiteContent.findOneAndDelete({ section: req.params.section });
     if (!content) { res.status(404).json({ success: false, message: 'Section not found' }); return; }
     res.json({ success: true, message: 'Content deleted' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const uploadHeroMedia = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
+
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const mediaUrl = `${serverUrl}/uploads/hero/${req.file.filename}`;
+
+    // Detect media type
+    const videoExts = ['.mp4', '.webm', '.mov', '.avi'];
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const mediaType = videoExts.includes(ext) ? 'video' : 'image';
+
+    // Update hero section with media info
+    const content = await WebsiteContent.findOneAndUpdate(
+      { section: 'hero' },
+      {
+        section: 'hero',
+        image: mediaUrl,
+        settings: { mediaType, mediaUrl },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({ success: true, data: content, mediaUrl, mediaType });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

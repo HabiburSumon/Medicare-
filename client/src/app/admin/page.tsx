@@ -34,6 +34,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [uploadingHero, setUploadingHero] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -125,6 +126,22 @@ export default function AdminDashboardPage() {
     { id: 'appointments', label: 'Appointments', icon: '📅' },
     { id: 'orders', label: 'Orders', icon: '🛒' },
   ];
+
+  const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('media', file);
+    setUploadingHero(true);
+    try {
+      const r = await api.post('/content/upload-hero', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      await fetchContent();
+      alert(`${r.data.mediaType === 'video' ? 'Video' : 'Image'} uploaded successfully!`);
+    } catch { alert('Upload failed'); }
+    setUploadingHero(false);
+  };
 
   const contentSections = ['hero', 'features', 'stats', 'cta', 'footer'];
 
@@ -222,8 +239,54 @@ export default function AdminDashboardPage() {
                       {saving ? 'Seeding...' : '🌱 Seed Default Content'}
                     </button>
                   </div>
+                  {/* Hero Media Upload Section */}
+                  <div className="bg-white rounded-2xl border p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-lg">🎬 Hero Section Background</h3>
+                        <p className="text-sm text-gray-400 mt-1">Upload an image, GIF, or video for the hero section background</p>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${content.hero?.image ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
+                        {content.hero?.image ? (content.hero?.settings?.mediaType === 'video' ? '🎬 Video' : '🖼️ Image') : 'No Media'}
+                      </span>
+                    </div>
+
+                    {content.hero?.image && (
+                      <div className="mb-4 rounded-xl overflow-hidden border bg-gray-50 relative">
+                        {content.hero?.settings?.mediaType === 'video' ? (
+                          <video src={content.hero.image} className="w-full h-48 object-cover" muted loop autoPlay />
+                        ) : (
+                          <img src={content.hero.image} alt="Hero Background" className="w-full h-48 object-cover" />
+                        )}
+                        <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded-lg text-xs">
+                          {content.hero?.settings?.mediaType === 'video' ? 'Video' : 'Image'}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3">
+                      <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold cursor-pointer transition-all ${uploadingHero ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
+                        {uploadingHero ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                            Upload Image / GIF / Video
+                          </>
+                        )}
+                        <input type="file" accept="image/*,video/*" onChange={handleHeroUpload} disabled={uploadingHero} className="hidden" />
+                      </label>
+                      <button onClick={() => startEdit('hero')} className="px-4 py-3 border rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                        ✏️ Edit Text
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {contentSections.map((section) => {
+                    {contentSections.filter(s => s !== 'hero').map((section) => {
                       const data = content[section];
                       return (
                         <div key={section} className="bg-white rounded-2xl border hover:shadow-lg transition-shadow">

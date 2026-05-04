@@ -123,47 +123,85 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* ========== HERO BANNER SLIDER ========== */}
-      <section className={'relative bg-gradient-to-br text-white transition-all duration-700 ease-in-out ' + slides[currentSlide].gradient}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center min-h-[480px] py-16">
-            <div className="animate-fade-in">
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">{hero?.title || slides[currentSlide].title}</h1>
-              <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-lg">{hero?.subtitle || slides[currentSlide].subtitle}</p>
+      {/* ========== HERO BANNER ========== */}
+      {hero?.image ? (
+        /* Hero with uploaded media background */
+        <section className="relative text-white min-h-[560px] flex items-center overflow-hidden">
+          {/* Background media */}
+          {hero?.settings?.mediaType === 'video' ? (
+            <video src={hero.image} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <img src={hero.image} alt="Hero Background" className="absolute inset-0 w-full h-full object-cover" />
+          )}
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
+          {/* Content */}
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+            <div className="max-w-2xl animate-fade-in">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">{hero?.title || 'Your Health, Our Priority'}</h1>
+              <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed">{hero?.subtitle || 'Access quality healthcare from anywhere. Book appointments, consult doctors, and receive digital prescriptions.'}</p>
               <div className="flex flex-wrap gap-4">
-                <Link href={slides[currentSlide].ctaLink} className="bg-white text-gray-900 px-8 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg hover:scale-105 transform duration-200">{slides[currentSlide].cta}</Link>
-                <Link href={slides[currentSlide].cta2Link} className="border-2 border-white/60 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition-colors">{slides[currentSlide].cta2}</Link>
+                <Link href="/doctors" className="bg-primary-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg hover:scale-105 transform duration-200">Book Appointment</Link>
+                <Link href="/symptom-checker" className="border-2 border-white/60 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition-colors">Check Symptoms</Link>
               </div>
-            </div>
-            <div className="hidden md:flex justify-center">
-              <div className="relative">
-                <div className="w-72 h-72 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm overflow-hidden">
-                  <Image src={slides[currentSlide].image} alt="Healthcare" width={280} height={280} className="rounded-full object-cover w-[260px] h-[260px] animate-fade-in" key={currentSlide} />
-                </div>
-                <div className="absolute -top-2 -right-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-1.5 animate-float">
+              {/* Floating badges */}
+              <div className="flex flex-wrap gap-4 mt-10">
+                <div className="bg-white/20 backdrop-blur-md px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
                   <Image src="https://img.icons8.com/3d-fluency/24/star.png" alt="star" width={18} height={18} /> 4.8 Rating
                 </div>
-                <div className="absolute -bottom-2 -left-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-1.5 animate-float animation-delay-500">
+                <div className="bg-white/20 backdrop-blur-md px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
                   <Image src="https://cdn-icons-png.flaticon.com/128/8866/8866054.png" alt="doctor" width={18} height={18} /> 500+ Doctors
+                </div>
+                <div className="bg-white/20 backdrop-blur-md px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
+                  <Image src="https://img.icons8.com/3d-fluency/40/calendar--v1.png" alt="appointments" width={18} height={18} /> 100K+ Appointments
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center space-x-4">
-          <button onClick={prevSlide} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors backdrop-blur-sm" aria-label="Previous slide">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <div className="flex space-x-2">
-            {slides.map((_, idx) => (
-              <button key={idx} onClick={() => setCurrentSlide(idx)} className={'h-2 rounded-full transition-all duration-300 ' + (idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60')} aria-label={'Go to slide ' + (idx + 1)} />
-            ))}
+        </section>
+      ) : (
+        /* Default hero slider (fallback) */
+        <section className={'relative bg-gradient-to-br text-white transition-all duration-700 ease-in-out ' + slides[currentSlide].gradient}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-2 gap-12 items-center min-h-[480px] py-16">
+              <div className="animate-fade-in">
+                <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">{hero?.title || slides[currentSlide].title}</h1>
+                <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-lg">{hero?.subtitle || slides[currentSlide].subtitle}</p>
+                <div className="flex flex-wrap gap-4">
+                  <Link href={slides[currentSlide].ctaLink} className="bg-white text-gray-900 px-8 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition-colors shadow-lg hover:scale-105 transform duration-200">{slides[currentSlide].cta}</Link>
+                  <Link href={slides[currentSlide].cta2Link} className="border-2 border-white/60 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition-colors">{slides[currentSlide].cta2}</Link>
+                </div>
+              </div>
+              <div className="hidden md:flex justify-center">
+                <div className="relative">
+                  <div className="w-72 h-72 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm overflow-hidden">
+                    <Image src={slides[currentSlide].image} alt="Healthcare" width={280} height={280} className="rounded-full object-cover w-[260px] h-[260px] animate-fade-in" key={currentSlide} />
+                  </div>
+                  <div className="absolute -top-2 -right-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-1.5 animate-float">
+                    <Image src="https://img.icons8.com/3d-fluency/24/star.png" alt="star" width={18} height={18} /> 4.8 Rating
+                  </div>
+                  <div className="absolute -bottom-2 -left-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-1.5 animate-float animation-delay-500">
+                    <Image src="https://cdn-icons-png.flaticon.com/128/8866/8866054.png" alt="doctor" width={18} height={18} /> 500+ Doctors
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <button onClick={nextSlide} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors backdrop-blur-sm" aria-label="Next slide">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          </button>
-        </div>
-      </section>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center space-x-4">
+            <button onClick={prevSlide} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors backdrop-blur-sm" aria-label="Previous slide">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div className="flex space-x-2">
+              {slides.map((_, idx) => (
+                <button key={idx} onClick={() => setCurrentSlide(idx)} className={'h-2 rounded-full transition-all duration-300 ' + (idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60')} aria-label={'Go to slide ' + (idx + 1)} />
+              ))}
+            </div>
+            <button onClick={nextSlide} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors backdrop-blur-sm" aria-label="Next slide">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* ========== STATS BAR - Light Blue ========== */}
       <section className="bg-gradient-to-r from-blue-50 via-white to-blue-50 border-b border-blue-100">
