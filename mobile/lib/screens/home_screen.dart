@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/api_config.dart';
 import '../providers/auth_provider.dart';
 import '../models/doctor.dart';
 import '../models/medicine.dart';
@@ -14,6 +15,8 @@ import 'profile/profile_screen.dart';
 import 'notifications/notifications_screen.dart';
 import 'symptom_checker/symptom_checker_screen.dart';
 import 'prescriptions/prescriptions_screen.dart';
+import 'cart/cart_screen.dart';
+import '../providers/cart_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -98,17 +101,6 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
   bool _loading = true;
   int _currentBanner = 0;
   final PageController _bannerController = PageController();
-  final List<String> _categories = [
-    'All',
-    'Medicines',
-    'Devices',
-    'Personal Care',
-    'Baby Care',
-    'Fitness',
-    'Supplements'
-  ];
-  int _selectedCategory = 0;
-  final List<Map<String, dynamic>> _cart = [];
 
   @override
   void initState() {
@@ -137,19 +129,8 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
   }
 
   void _addToCart(Medicine medicine) {
-    setState(() {
-      final idx = _cart.indexWhere((item) => item['id'] == medicine.id);
-      if (idx >= 0) {
-        _cart[idx]['qty'] = (_cart[idx]['qty'] as int) + 1;
-      } else {
-        _cart.add({
-          'id': medicine.id,
-          'name': medicine.name,
-          'price': medicine.price,
-          'qty': 1
-        });
-      }
-    });
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    cart.addItem(medicine);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('${medicine.name} added to cart'),
       duration: const Duration(seconds: 1),
@@ -191,26 +172,28 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                     ],
                   ),
                   actions: [
-                    Stack(children: [
-                      IconButton(
-                        icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                        onPressed: _showCart,
-                      ),
-                      if (_cart.isNotEmpty)
-                        Positioned(
-                          right: 4,
-                          top: 4,
-                          child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor: Colors.red,
-                            child: Text(
-                              '${_cart.fold(0, (sum, item) => sum + (item['qty'] as int))}',
-                              style:
-                                  const TextStyle(color: Colors.white, fontSize: 10),
+                    Consumer<CartProvider>(
+                      builder: (_, cart, __) => Stack(children: [
+                        IconButton(
+                          icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                          onPressed: _showCart,
+                        ),
+                        if (cart.itemCount > 0)
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: CircleAvatar(
+                              radius: 10,
+                              backgroundColor: Colors.red,
+                              child: Text(
+                                '${cart.itemCount}',
+                                style:
+                                    const TextStyle(color: Colors.white, fontSize: 10),
+                              ),
                             ),
                           ),
-                        ),
-                    ]),
+                      ]),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.notifications_outlined,
                           color: Colors.white),
@@ -276,18 +259,21 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                               'Use code: WELCOME20',
                               const Color(0xFF2563EB),
                               const Color(0xFF7C3AED),
+                              'assets/banners/banner_medicine_sale.jpg',
                             ),
                             _promoBanner(
                               '\u{1FA7A} Free Doctor Consultation',
                               'Book now and get free first visit',
                               const Color(0xFF10B981),
                               const Color(0xFF059669),
+                              'assets/banners/banner_doctor_consult.jpg',
                             ),
                             _promoBanner(
                               '\u{1F3E5} Health Checkup Packages',
                               'Starting from \u09F3999 only',
                               const Color(0xFFF59E0B),
                               const Color(0xFFEF4444),
+                              'assets/banners/banner_health_checkup.jpg',
                             ),
                           ],
                         ),
@@ -364,9 +350,105 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                // CATEGORIES
+                // ORDER VIA PRESCRIPTION
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Order via Prescription',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text('Upload your prescription & get medicines delivered',
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey.shade500)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Icon(
+                                        Icons.description_outlined,
+                                        color: Colors.white,
+                                        size: 32),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Quick & Easy',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold)),
+                                        SizedBox(height: 4),
+                                        Text(
+                                            'Upload prescription and we\'ll find the medicines for you',
+                                            style: TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _prescriptionStep(
+                                        Icons.camera_alt_outlined,
+                                        'Take a Photo',
+                                        'Capture prescription'),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _prescriptionStep(
+                                        Icons.photo_library_outlined,
+                                        'Upload Image',
+                                        'From gallery'),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _prescriptionStep(
+                                        Icons.upload_file_outlined,
+                                        'Upload PDF',
+                                        'Document file'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+                // CATEGORIES (Modern Grid)
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,27 +472,37 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 44,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _categories.length,
-                          itemBuilder: (_, i) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(_categories[i]),
-                              selected: _selectedCategory == i,
-                              selectedColor: const Color(0xFF2563EB)
-                                  .withValues(alpha: 0.1),
-                              onSelected: (_) =>
-                                  setState(() => _selectedCategory = i),
-                            ),
-                          ),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Expanded(child: _categoryGridItem(Icons.medication_outlined, 'Medicines', const Color(0xFF2563EB), 24)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _categoryGridItem(Icons.devices_outlined, 'Devices', const Color(0xFF10B981), 18)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _categoryGridItem(Icons.health_and_safety_outlined, 'Personal\nCare', const Color(0xFFF59E0B), 22)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _categoryGridItem(Icons.baby_changing_station, 'Baby\nCare', const Color(0xFFEC4899), 20)),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Expanded(child: _categoryGridItem(Icons.fitness_center_outlined, 'Fitness', const Color(0xFF8B5CF6), 18)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _categoryGridItem(Icons.local_pharmacy_outlined, 'Supplements', const Color(0xFF06B6D4), 16)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _categoryGridItem(Icons.vaccines_outlined, 'Vaccines', const Color(0xFFEF4444), 18)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _categoryGridItem(Icons.bloodtype_outlined, 'Lab Tests', const Color(0xFF14B8A6), 16)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -629,27 +721,51 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
   }
 
   Widget _promoBanner(
-      String title, String subtitle, Color c1, Color c2) {
+      String title, String subtitle, Color c1, Color c2, String assetPath) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [c1, c2]),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(title,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(subtitle,
-              style: const TextStyle(color: Colors.white70, fontSize: 14)),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              assetPath,
+              fit: BoxFit.cover,
+              color: Colors.black.withValues(alpha: 0.35),
+              colorBlendMode: BlendMode.darken,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [c1.withValues(alpha: 0.8), c2.withValues(alpha: 0.6)],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(subtitle,
+                      style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -703,36 +819,27 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(16)),
               ),
-              child: m.image != null && m.image!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                      child: CachedNetworkImage(
-                        imageUrl: m.image!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Center(
-                            child: Icon(Icons.medication,
-                                size: 40,
-                                color: const Color(0xFF2563EB).withValues(alpha: 0.5))),
-                        errorWidget: (_, __, ___) => Center(
-                            child: Icon(Icons.medication,
-                                size: 40,
-                                color: const Color(0xFF2563EB).withValues(alpha: 0.5))),
-                      ),
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.medication,
-                              size: 40,
-                              color: const Color(0xFF2563EB).withValues(alpha: 0.5)),
-                          const SizedBox(height: 4),
-                          Text(m.category,
-                              style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
-                        ],
-                      ),
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Image.asset(
+                  m.assetImage,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.medication,
+                            size: 40,
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.5)),
+                        const SizedBox(height: 4),
+                        Text(m.category,
+                            style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                      ],
                     ),
+                  ),
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -814,10 +921,10 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
                   radius: 20,
                   backgroundColor:
                       const Color(0xFF2563EB).withValues(alpha: 0.1),
-                  backgroundImage: d.avatar != null && d.avatar!.isNotEmpty
-                      ? CachedNetworkImageProvider(d.avatar!)
+                  backgroundImage: ApiConfig.buildImageUrl(d.avatar) != null
+                      ? CachedNetworkImageProvider(ApiConfig.buildImageUrl(d.avatar!)!, headers: ApiConfig.imageHeaders)
                       : null,
-                  child: (d.avatar == null || d.avatar!.isEmpty)
+                  child: ApiConfig.buildImageUrl(d.avatar) == null
                       ? Text(
                           d.name.isNotEmpty ? d.name[0] : 'D',
                           style: const TextStyle(
@@ -957,133 +1064,91 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
     );
   }
 
-  void _showCart() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius:
-              BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _prescriptionStep(IconData icon, String title, String subtitle) {
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$title feature coming soon!'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('My Cart',
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                Text(
-                    '${_cart.fold(0, (sum, item) => sum + (item['qty'] as int))} items',
-                    style: TextStyle(color: Colors.grey.shade600)),
-              ],
-            ),
-          ),
-          const Divider(),
-          Expanded(
-            child: _cart.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart_outlined,
-                            size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('Your cart is empty',
-                            style:
-                                TextStyle(fontSize: 16, color: Colors.grey)),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _cart.length,
-                    itemBuilder: (_, i) => Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: const Icon(Icons.medication,
-                            color: Color(0xFF2563EB)),
-                        title: Text(_cart[i]['name'],
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Text(
-                            '\u09F3${(_cart[i]['price'] as double).toStringAsFixed(0)} x ${_cart[i]['qty']}'),
-                        trailing: Text(
-                          '\u09F3${((_cart[i]['price'] as double) * (_cart[i]['qty'] as int)).toStringAsFixed(0)}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2563EB)),
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-          if (_cart.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, -2)),
-                ],
-              ),
-              child: Column(children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(
-                      '\u09F3${_cart.fold<double>(0, (sum, item) => sum + (item['price'] as double) * (item['qty'] as int)).toStringAsFixed(0)}',
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2563EB)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => ScaffoldMessenger.of(context)
-                        .showSnackBar(
-                            const SnackBar(content: Text('Order placed successfully!'))),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Place Order',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ]),
-            ),
-        ]),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            const SizedBox(height: 6),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold)),
+            Text(subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white60, fontSize: 9)),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _categoryGridItem(
+      IconData icon, String label, Color color, int count) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MedicinesScreen())),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w600)),
+            Text('$count+ items',
+                style: TextStyle(fontSize: 9, color: Colors.grey.shade400)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCart() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CartScreen(),
+      ),
+    );
+  }
+
 }
 
 // ==================== DOCTOR HOME TAB ====================

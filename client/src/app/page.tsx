@@ -345,7 +345,7 @@ export default function HomePage() {
           {/* Medicine Cards Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {medicines.map((med, i) => (
-              <div key={i} className="group bg-white rounded-2xl border border-gray-100 hover:border-primary-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative animate-scale-in" style={{ animationDelay: `${i * 0.08}s` }}>
+              <Link key={i} href="/medicines" className="group bg-white rounded-2xl border border-gray-100 hover:border-primary-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative animate-scale-in block" style={{ animationDelay: `${i * 0.08}s` }}>
                 {med.badge && (
                   <div className={'absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-white text-xs font-bold ' + med.badgeColor}>{med.badge}</div>
                 )}
@@ -383,7 +383,7 @@ export default function HomePage() {
                     <button className="w-full mt-3 bg-gray-100 text-gray-400 py-2 rounded-xl text-xs font-semibold cursor-not-allowed" disabled>Out of Stock</button>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 

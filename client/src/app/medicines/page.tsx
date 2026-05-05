@@ -277,7 +277,7 @@ export default function MedicinesPage() {
                 {medicines.map((med, idx) => {
                   const inCart = cart.find((c) => c.medicineId === med._id);
                   return (
-                    <div key={med._id} className="bg-white rounded-xl border border-gray-100 hover:shadow-md transition-shadow overflow-hidden group">
+                    <Link key={med._id} href={`/medicines/${med._id}`} className="bg-white rounded-xl border border-gray-100 hover:shadow-md transition-shadow overflow-hidden group block">
                       {/* Product Image */}
                       <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center h-36">
                         <Image
@@ -300,45 +300,45 @@ export default function MedicinesPage() {
                       </div>
 
                       {/* Product Info */}
-                      <div className="p-3.5">
-                        <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">{med.manufacturer}</p>
-                        <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-2 min-h-[2.5rem]">{med.name}</h3>
-                        <p className="text-xs text-gray-500 mb-2">{med.genericName} • {med.strength}</p>
-                        <p className="text-xs text-gray-400 mb-3">{med.dosageForm}</p>
+                        <div className="p-3.5">
+                          <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">{med.manufacturer}</p>
+                          <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-2 min-h-[2.5rem] group-hover:text-primary-600 transition-colors">{med.name}</h3>
+                          <p className="text-xs text-gray-500 mb-2">{med.genericName}{med.strength ? ` • ${med.strength}` : ''}</p>
+                          <p className="text-xs text-gray-400 mb-3">{med.dosageForm}</p>
 
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-lg font-bold text-gray-900">৳{med.price}</span>
+                          <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+                            <div>
+                              <span className="text-lg font-bold text-gray-900">৳{med.price}</span>
+                            </div>
+                            {med.inStock && (
+                              inCart ? (
+                                <div className="flex items-center space-x-1" onClick={(e) => e.preventDefault()}>
+                                  <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); inCart.quantity <= 1 ? removeFromCart(med._id) : updateQuantity(med._id, -1); }}
+                                    className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 text-sm font-bold"
+                                  >
+                                    −
+                                  </button>
+                                  <span className="w-7 text-center text-sm font-semibold">{inCart.quantity}</span>
+                                  <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateQuantity(med._id, 1); }}
+                                    className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center text-white hover:bg-primary-700 text-sm font-bold"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart(med); }}
+                                  className="px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+                                >
+                                  Add
+                                </button>
+                              )
+                            )}
                           </div>
-                          {med.inStock && (
-                            inCart ? (
-                              <div className="flex items-center space-x-1">
-                                <button
-                                  onClick={() => inCart.quantity <= 1 ? removeFromCart(med._id) : updateQuantity(med._id, -1)}
-                                  className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 text-sm font-bold"
-                                >
-                                  −
-                                </button>
-                                <span className="w-7 text-center text-sm font-semibold">{inCart.quantity}</span>
-                                <button
-                                  onClick={() => updateQuantity(med._id, 1)}
-                                  className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center text-white hover:bg-primary-700 text-sm font-bold"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => addToCart(med)}
-                                className="px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-                              >
-                                Add
-                              </button>
-                            )
-                          )}
                         </div>
-                      </div>
-                    </div>
+                      </Link>
                   );
                 })}
               </div>
