@@ -127,7 +127,53 @@ export default function AdminDashboardPage() {
   };
 
   // Content management
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState<Record<string, any>>({});
+
   const handleSeedContent = async () => { if (!confirm('Seed default content?')) return; setSaving(true); try { const r = await api.post('/content/seed'); setContent(r.data.data || {}); } catch {} setSaving(false); };
+
+  const openContentEditor = (section: string) => {
+    const data = content[section] || {};
+    setEditContent({
+      section,
+      title: data.title || '',
+      subtitle: data.subtitle || '',
+      description: data.description || '',
+      image: data.image || '',
+      items: (data.items || []).map((item: any) => ({ ...item })),
+      settings: data.settings || {},
+    });
+    setEditingSection(section);
+  };
+
+  const handleSaveContent = async () => {
+    setSaving(true);
+    try {
+      await api.post('/content', editContent);
+      await fetchContent();
+      setEditingSection(null);
+      setEditContent({});
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to save content');
+    }
+    setSaving(false);
+  };
+
+  const addContentItem = () => {
+    const items = [...(editContent.items || []), { icon: '', title: '', description: '', link: '' }];
+    setEditContent({ ...editContent, items });
+  };
+
+  const removeContentItem = (index: number) => {
+    const items = (editContent.items || []).filter((_: any, i: number) => i !== index);
+    setEditContent({ ...editContent, items });
+  };
+
+  const updateContentItem = (index: number, field: string, value: string) => {
+    const items = [...(editContent.items || [])];
+    items[index] = { ...items[index], [field]: value };
+    setEditContent({ ...editContent, items });
+  };
 
   if (checking) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>;
   if (!isAdmin) return null;
@@ -562,17 +608,140 @@ export default function AdminDashboardPage() {
               {activeTab === 'content' && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <p className="text-gray-500 text-sm">Manage website content sections</p>
+                    <p className="text-gray-500 text-sm">Manage website content sections — click Edit to modify any section</p>
                     <button onClick={handleSeedContent} disabled={saving} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50">{saving ? 'Seeding...' : '🌱 Seed Default Content'}</button>
                   </div>
+
+                  {/* Content Section Editor Modal */}
+                  {editingSection && (
+                    <div className="fixed inset-0 z-50 overflow-y-auto">
+                      <div className="flex items-start justify-center min-h-screen p-4 pt-16">
+                        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setEditingSection(null)}></div>
+                        <div className="relative bg-white rounded-2xl max-w-3xl w-full shadow-2xl z-10 max-h-[85vh] overflow-y-auto">
+                          <div className="sticky top-0 bg-white px-6 py-4 border-b flex items-center justify-between z-10 rounded-t-2xl">
+                            <h2 className="text-lg font-bold">✏️ Edit "{editingSection}" Section</h2>
+                            <button onClick={() => setEditingSection(null)} className="p-2 hover:bg-gray-100 rounded-xl text-gray-400 hover:text-gray-600">✕</button>
+                          </div>
+                          <div className="p-6 space-y-5">
+                            {/* Title & Subtitle */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                <input type="text" value={editContent.title || ''} onChange={e => setEditContent({ ...editContent, title: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Section title" />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                                <input type="text" value={editContent.subtitle || ''} onChange={e => setEditContent({ ...editContent, subtitle: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Section subtitle" />
+                              </div>
+                            </div>
+
+                            {/* Description */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                              <textarea value={editContent.description || ''} onChange={e => setEditContent({ ...editContent, description: e.target.value })} rows={3} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Section description (used in footer, etc.)" />
+                            </div>
+
+                            {/* Image URL */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                              <input type="text" value={editContent.image || ''} onChange={e => setEditContent({ ...editContent, image: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
+                            </div>
+
+                            {/* Items */}
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <label className="block text-sm font-medium text-gray-700">Items / Features / Links</label>
+                                <button type="button" onClick={addContentItem} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-100">+ Add Item</button>
+                              </div>
+                              {(editContent.items || []).length === 0 && (
+                                <p className="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-xl">No items yet. Click "Add Item" to add one.</p>
+                              )}
+                              <div className="space-y-3">
+                                {(editContent.items || []).map((item: any, idx: number) => (
+                                  <div key={idx} className="bg-gray-50 rounded-xl p-4 relative">
+                                    <button type="button" onClick={() => removeContentItem(idx)} className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 text-xs font-bold">×</button>
+                                    <div className="grid grid-cols-2 gap-3 pr-8">
+                                      <div>
+                                        <label className="block text-xs text-gray-500 mb-0.5">Icon (emoji)</label>
+                                        <input type="text" value={item.icon || ''} onChange={e => updateContentItem(idx, 'icon', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="🏥" />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-500 mb-0.5">Title</label>
+                                        <input type="text" value={item.title || ''} onChange={e => updateContentItem(idx, 'title', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Item title" />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-500 mb-0.5">Description</label>
+                                        <input type="text" value={item.description || ''} onChange={e => updateContentItem(idx, 'description', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Item description" />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-500 mb-0.5">Link</label>
+                                        <input type="text" value={item.link || ''} onChange={e => updateContentItem(idx, 'link', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="/path" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Settings (raw JSON for advanced users) */}
+                            {editingSection === 'footer' && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Copyright Text</label>
+                                <input type="text" value={editContent.settings?.copyright || ''} onChange={e => setEditContent({ ...editContent, settings: { ...editContent.settings, copyright: e.target.value } })} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="© 2026 MediCare+. All rights reserved." />
+                              </div>
+                            )}
+                          </div>
+                          <div className="sticky bottom-0 bg-white px-6 py-4 border-t flex justify-end space-x-3 rounded-b-2xl">
+                            <button onClick={() => setEditingSection(null)} className="px-5 py-2.5 border rounded-xl text-sm font-medium hover:bg-gray-50">Cancel</button>
+                            <button onClick={handleSaveContent} disabled={saving} className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 shadow-lg shadow-blue-600/30">
+                              {saving ? 'Saving...' : '💾 Save Changes'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section Cards */}
                   {['hero', 'features', 'stats', 'cta', 'footer'].map(section => {
                     const data = content[section];
                     return (
-                      <div key={section} className="bg-white rounded-2xl border p-5">
+                      <div key={section} className="bg-white rounded-2xl border p-5 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between mb-3">
-                          <div><h3 className="font-bold text-gray-900 capitalize text-lg">{section}</h3>{data?.title && <p className="text-sm text-gray-500">{data.title}</p>}</div>
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${data ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{data ? 'Active' : 'Empty'}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-lg">
+                              {section === 'hero' && '🏠'}
+                              {section === 'features' && '✨'}
+                              {section === 'stats' && '📊'}
+                              {section === 'cta' && '📢'}
+                              {section === 'footer' && '🦶'}
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-gray-900 capitalize text-lg">{section === 'cta' ? 'Call to Action' : section === 'hero' ? 'Hero Banner' : section}</h3>
+                              {data?.title && <p className="text-sm text-gray-500">{data.title}</p>}
+                              {data?.subtitle && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{data.subtitle}</p>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${data ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{data ? 'Active' : 'Empty'}</span>
+                            <button onClick={() => openContentEditor(section)} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors">✏️ Edit</button>
+                          </div>
                         </div>
+                        {/* Preview items */}
+                        {data?.items && data.items.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs text-gray-400 mb-2">{data.items.length} item(s):</p>
+                            <div className="flex flex-wrap gap-2">
+                              {data.items.slice(0, 4).map((item: any, i: number) => (
+                                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 rounded-lg text-xs text-gray-600">
+                                  {item.icon && <span>{item.icon}</span>}
+                                  <span className="font-medium">{item.title}</span>
+                                </span>
+                              ))}
+                              {data.items.length > 4 && <span className="px-2.5 py-1 text-xs text-gray-400">+{data.items.length - 4} more</span>}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
