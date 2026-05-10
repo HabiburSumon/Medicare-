@@ -175,6 +175,57 @@ export default function AdminDashboardPage() {
     setEditContent({ ...editContent, items });
   };
 
+  // Hero slide upload
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const API_BASE = typeof window !== 'undefined' ? (localStorage.getItem('api_base') || 'http://localhost:5000') : 'http://localhost:5000';
+
+  const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingHero(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append('media', files[i]);
+        await api.post('/content/upload-hero', formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 });
+      }
+      await fetchContent();
+      // Update editContent with new slides
+      const freshContent = await api.get('/content');
+      const heroData = freshContent.data.data?.hero;
+      if (heroData) {
+        setEditContent(prev => ({
+          ...prev,
+          settings: heroData.settings || {},
+          image: heroData.image || '',
+        }));
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to upload');
+    }
+    setUploadingHero(false);
+    e.target.value = '';
+  };
+
+  const handleDeleteHeroSlide = async (index: number) => {
+    if (!confirm('Delete this slide?')) return;
+    try {
+      await api.delete(`/content/hero-slide/${index}`);
+      await fetchContent();
+      const freshContent = await api.get('/content');
+      const heroData = freshContent.data.data?.hero;
+      if (heroData) {
+        setEditContent(prev => ({
+          ...prev,
+          settings: heroData.settings || {},
+          image: heroData.image || '',
+        }));
+      }
+    } catch (err: any) {
+      alert('Failed to delete slide');
+    }
+  };
+
   if (checking) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>;
   if (!isAdmin) return null;
 
@@ -641,11 +692,59 @@ export default function AdminDashboardPage() {
                               <textarea value={editContent.description || ''} onChange={e => setEditContent({ ...editContent, description: e.target.value })} rows={3} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Section description (used in footer, etc.)" />
                             </div>
 
-                            {/* Image URL */}
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                              <input type="text" value={editContent.image || ''} onChange={e => setEditContent({ ...editContent, image: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
-                            </div>
+                            {/* Hero Banner Slides Upload */}
+                            {editingSection === 'hero' && (
+                              <div className="bg-blue-50 rounded-2xl p-5 space-y-4">
+                                <div>
+                                  <h4 className="font-semibold text-sm text-blue-900 mb-2">🎬 Banner Slides (Images / Videos)</h4>
+                                  <p className="text-xs text-blue-600 mb-3">Upload multiple images or videos for the hero banner carousel</p>
+                                  <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 cursor-pointer shadow-lg shadow-blue-600/30">
+                                    {uploadingHero ? (
+                                      <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Uploading...</>
+                                    ) : (
+                                      <>📤 Upload Images / Videos</>
+                                    )}
+                                    <input type="file" multiple accept="image/*,video/*" onChange={handleHeroUpload} className="hidden" disabled={uploadingHero} />
+                                  </label>
+                                </div>
+
+                                {/* Existing Slides Preview */}
+                                {(() => {
+                                  const slides = editContent.settings?.slides || content.hero?.settings?.slides || [];
+                                  return slides.length > 0 ? (
+                                    <div>
+                                      <p className="text-xs font-medium text-blue-800 mb-2">{slides.length} slide(s) uploaded:</p>
+                                      <div className="grid grid-cols-3 gap-3">
+                                        {slides.map((slide: any, idx: number) => (
+                                          <div key={idx} className="relative group bg-white rounded-xl overflow-hidden border-2 border-blue-200 shadow-sm">
+                                            {slide.mediaType === 'video' ? (
+                                              <div className="h-24 bg-gray-900 flex items-center justify-center">
+                                                <video src={slide.url} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 flex items-center justify-center"><span className="text-white text-2xl">▶</span></div>
+                                              </div>
+                                            ) : (
+                                              <img src={slide.url} alt={`Slide ${idx + 1}`} className="w-full h-24 object-cover" />
+                                            )}
+                                            <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">#{idx + 1}</div>
+                                            <button onClick={() => handleDeleteHeroSlide(idx)} className="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700">×</button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-blue-400 text-center py-3">No slides uploaded yet. Use the button above to add banner images or videos.</p>
+                                  );
+                                })()}
+                              </div>
+                            )}
+
+                            {/* Image URL (non-hero sections) */}
+                            {editingSection !== 'hero' && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                                <input type="text" value={editContent.image || ''} onChange={e => setEditContent({ ...editContent, image: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
+                              </div>
+                            )}
 
                             {/* Items */}
                             <div>
