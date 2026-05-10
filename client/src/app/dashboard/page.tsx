@@ -693,9 +693,9 @@ function DoctorDashboard({ user }: { user: any }) {
       {/* Quick Actions */}
       <div className="grid md:grid-cols-4 gap-4 mb-8">
         <Link href="/chat" className="card flex items-center space-x-3 hover:border-primary-300 hover:shadow-md transition-all"><span className="text-2xl">💬</span><div><h3 className="font-semibold text-sm">Messages</h3><p className="text-xs text-gray-500">Chat with patients</p></div></Link>
-        <Link href="/doctors" className="card flex items-center space-x-3 hover:border-primary-300 hover:shadow-md transition-all"><span className="text-2xl">📋</span><div><h3 className="font-semibold text-sm">My Profile</h3><p className="text-xs text-gray-500">Update info</p></div></Link>
-        <Link href="/profile" className="card flex items-center space-x-3 hover:border-primary-300 hover:shadow-md transition-all"><span className="text-2xl">⚙️</span><div><h3 className="font-semibold text-sm">Settings</h3><p className="text-xs text-gray-500">Account settings</p></div></Link>
-        <div className="card flex items-center space-x-3"><span className="text-2xl">📊</span><div><h3 className="font-semibold text-sm">Earnings</h3><p className="text-xs text-gray-500">View reports</p></div></div>
+        <Link href="/profile" className="card flex items-center space-x-3 hover:border-primary-300 hover:shadow-md transition-all"><span className="text-2xl">📋</span><div><h3 className="font-semibold text-sm">My Profile</h3><p className="text-xs text-gray-500">View & update info</p></div></Link>
+        <Link href="/prescriptions" className="card flex items-center space-x-3 hover:border-primary-300 hover:shadow-md transition-all"><span className="text-2xl">📝</span><div><h3 className="font-semibold text-sm">Prescriptions</h3><p className="text-xs text-gray-500">View all written</p></div></Link>
+        <Link href="/notifications" className="card flex items-center space-x-3 hover:border-primary-300 hover:shadow-md transition-all"><span className="text-2xl">🔔</span><div><h3 className="font-semibold text-sm">Notifications</h3><p className="text-xs text-gray-500">Recent alerts</p></div></Link>
       </div>
 
       {/* Tabs */}
