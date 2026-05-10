@@ -1,3 +1,4 @@
+import '../../widgets/app_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -56,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 32),
           SizedBox(width: double.infinity, height: 50, child: ElevatedButton(
             onPressed: _loading ? null : _register,
-            child: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            child: _loading ? const AppLoadingInline(size: 20)
               : const Text('Create Account'),
           )),
           const SizedBox(height: 24),

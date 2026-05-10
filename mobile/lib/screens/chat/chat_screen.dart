@@ -1,3 +1,4 @@
+import '../../widgets/app_loading.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
@@ -28,7 +29,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _scrollDown() => Future.delayed(const Duration(milliseconds: 100), () { if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut); });
   @override
   Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text(widget.receiverName)), body: Column(children: [
-    Expanded(child: _loading ? const Center(child: CircularProgressIndicator()) : ListView.builder(controller: _scroll, padding: const EdgeInsets.all(16), itemCount: _messages.length,
+    Expanded(child: _loading ? const AppLoading() : ListView.builder(controller: _scroll, padding: const EdgeInsets.all(16), itemCount: _messages.length,
       itemBuilder: (_, i) { final m = _messages[i]; final isMe = m['senderId'] == 'me'; return Align(alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
           decoration: BoxDecoration(color: isMe ? const Color(0xFF2563EB) : Colors.white, borderRadius: BorderRadius.circular(16), border: isMe ? null : Border.all(color: const Color(0xFFE5E7EB))),

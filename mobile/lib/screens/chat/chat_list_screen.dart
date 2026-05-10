@@ -1,3 +1,4 @@
+import '../../widgets/app_loading.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import 'chat_screen.dart';
@@ -16,6 +17,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     catch (_) { setState(() => _loading = false); }
   }
   @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Messages')), body: _loading ? const Center(child: CircularProgressIndicator()) : _convos.isEmpty ? const Center(child: Text('No conversations')) : ListView.builder(padding: const EdgeInsets.all(16), itemCount: _convos.length,
+  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Messages')), body: _loading ? const AppLoading() : _convos.isEmpty ? const Center(child: Text('No conversations')) : ListView.builder(padding: const EdgeInsets.all(16), itemCount: _convos.length,
     itemBuilder: (_, i) { final c = _convos[i]; return Card(margin: const EdgeInsets.only(bottom: 12), child: ListTile(leading: const CircleAvatar(backgroundColor: Color(0xFF2563EB), child: Icon(Icons.person, color: Colors.white)), title: Text(c['name'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.w600)), subtitle: Text(c['lastMessage'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(receiverId: c['id'] ?? '', receiverName: c['name'] ?? 'User'))))); },));
 }

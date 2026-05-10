@@ -1,18 +1,69 @@
 import { Router } from 'express';
-import { getDashboardStats, getAllUsers, updateUser, deleteUser, getAllAppointments, getAllOrders, getUserDoctorProfile, updateUserDoctorProfile, updateAppointmentStatus, getAllDoctors } from '../controllers/admin.controller';
+import {
+  getDashboardStats,
+  // Users
+  getAllUsers, updateUser, deleteUser, toggleUserStatus,
+  // Doctors
+  getAllDoctors, getUserDoctorProfile, updateUserDoctorProfile, addDoctor, deleteDoctor,
+  // Medicines
+  getAllMedicines, addMedicine, updateMedicine, deleteMedicine,
+  // Appointments
+  getAllAppointments, updateAppointmentStatus,
+  // Orders
+  getAllOrders, updateOrderStatus,
+  // Reviews
+  getAllReviews, deleteReview,
+  // Prescriptions
+  getAllPrescriptions,
+  // Notifications
+  sendNotification, getNotifications,
+} from '../controllers/admin.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/stats', authenticate, authorize('admin'), getDashboardStats);
-router.get('/users', authenticate, authorize('admin'), getAllUsers);
-router.put('/users/:id', authenticate, authorize('admin'), updateUser);
-router.delete('/users/:id', authenticate, authorize('admin'), deleteUser);
-router.get('/users/:id/doctor-profile', authenticate, authorize('admin'), getUserDoctorProfile);
-router.put('/users/:id/doctor-profile', authenticate, authorize('admin'), updateUserDoctorProfile);
-router.get('/doctors', authenticate, authorize('admin'), getAllDoctors);
-router.get('/appointments', authenticate, authorize('admin'), getAllAppointments);
-router.put('/appointments/:id/status', authenticate, authorize('admin'), updateAppointmentStatus);
-router.get('/orders', authenticate, authorize('admin'), getAllOrders);
+// All routes require admin authentication
+router.use(authenticate, authorize('admin'));
+
+// Dashboard
+router.get('/stats', getDashboardStats);
+
+// Users
+router.get('/users', getAllUsers);
+router.put('/users/:id', updateUser);
+router.put('/users/:id/toggle-status', toggleUserStatus);
+router.delete('/users/:id', deleteUser);
+
+// Doctors
+router.get('/doctors', getAllDoctors);
+router.post('/doctors', addDoctor);
+router.get('/users/:id/doctor-profile', getUserDoctorProfile);
+router.put('/users/:id/doctor-profile', updateUserDoctorProfile);
+router.delete('/doctors/:id', deleteDoctor);
+
+// Medicines
+router.get('/medicines', getAllMedicines);
+router.post('/medicines', addMedicine);
+router.put('/medicines/:id', updateMedicine);
+router.delete('/medicines/:id', deleteMedicine);
+
+// Appointments
+router.get('/appointments', getAllAppointments);
+router.put('/appointments/:id/status', updateAppointmentStatus);
+
+// Orders
+router.get('/orders', getAllOrders);
+router.put('/orders/:id/status', updateOrderStatus);
+
+// Reviews
+router.get('/reviews', getAllReviews);
+router.delete('/reviews/:id', deleteReview);
+
+// Prescriptions
+router.get('/prescriptions', getAllPrescriptions);
+
+// Notifications
+router.get('/notifications', getNotifications);
+router.post('/notifications', sendNotification);
 
 export default router;

@@ -1,3 +1,4 @@
+import '../../widgets/app_loading.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../config/api_config.dart';
@@ -36,7 +37,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       OutlinedButton(onPressed: () async { final dt = await showDatePicker(context: context, initialDate: _selectedDate, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 30))); if (dt != null) setState(() => _selectedDate = dt); }, child: Text(_selectedDate.toIso8601String().split('T')[0])),
       const SizedBox(height: 24), const Text('Select Time', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 8),
       Wrap(spacing: 8, runSpacing: 8, children: _timeSlots.map((t) => ChoiceChip(label: Text(t), selected: _selectedTime == t, onSelected: (_) => setState(() => _selectedTime = t))).toList()),
-      const SizedBox(height: 32), SizedBox(width: double.infinity, height: 50, child: ElevatedButton(onPressed: _loading ? null : _book, child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Book Appointment'))),
+      const SizedBox(height: 32), SizedBox(width: double.infinity, height: 50, child: ElevatedButton(onPressed: _loading ? null : _book, child: _loading ? const AppLoadingInline() : const Text('Book Appointment'))),
     ])));
   }
   Widget _i(String v, String l) => Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(children: [Text(v, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))), Text(l, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))])));

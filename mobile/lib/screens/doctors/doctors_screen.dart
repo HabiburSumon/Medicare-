@@ -1,3 +1,4 @@
+import '../../widgets/app_loading.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../config/api_config.dart';
@@ -29,7 +30,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
       appBar: AppBar(title: const Text('Find Doctors')),
       body: Column(children: [
         Padding(padding: const EdgeInsets.all(16), child: TextField(decoration: const InputDecoration(labelText: 'Search doctors...', prefixIcon: Icon(Icons.search)), onChanged: (v) => setState(() => _search = v))),
-        Expanded(child: _loading ? const Center(child: CircularProgressIndicator()) : filtered.isEmpty ? const Center(child: Text('No doctors found')) : ListView.builder(
+        Expanded(child: _loading ? const AppLoading() : filtered.isEmpty ? const Center(child: Text('No doctors found')) : ListView.builder(
           padding: const EdgeInsets.all(16), itemCount: filtered.length,
           itemBuilder: (_, i) => Card(margin: const EdgeInsets.only(bottom: 12), child: ListTile(
             contentPadding: const EdgeInsets.all(12),

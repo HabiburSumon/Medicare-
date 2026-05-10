@@ -1,3 +1,4 @@
+import '../../widgets/app_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
@@ -597,12 +598,7 @@ class _LoginScreenState extends State<LoginScreen>
           highlightColor: Colors.white.withValues(alpha: 0.1),
           child: Center(
             child: _loading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: Colors.white),
-                  )
+                ? const AppLoadingInline(size: 22)
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

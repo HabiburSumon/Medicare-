@@ -1,3 +1,4 @@
+import '../widgets/app_loading.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -145,7 +146,7 @@ class _ECommerceHomeTabState extends State<_ECommerceHomeTab> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
+          ? const AppLoading()
           : CustomScrollView(
               slivers: [
                 // APP BAR WITH SEARCH

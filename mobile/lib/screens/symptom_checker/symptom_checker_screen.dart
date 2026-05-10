@@ -1,3 +1,4 @@
+import '../../widgets/app_loading.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
@@ -334,12 +335,7 @@ class _SymptomCheckerScreenState extends State<SymptomCheckerScreen> {
                         disabledBackgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.6),
                       ),
                       child: _loading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2.5),
-                            )
+                          ? const AppLoadingInline(size: 22)
                           : const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
