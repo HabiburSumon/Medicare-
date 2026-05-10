@@ -4,9 +4,9 @@ import {
   // Users
   getAllUsers, updateUser, deleteUser, toggleUserStatus,
   // Doctors
-  getAllDoctors, getUserDoctorProfile, updateUserDoctorProfile, addDoctor, deleteDoctor,
+  getAllDoctors, getUserDoctorProfile, updateUserDoctorProfile, addDoctor, deleteDoctor, doctorUpload, uploadDoctorImage,
   // Medicines
-  getAllMedicines, addMedicine, updateMedicine, deleteMedicine,
+  getAllMedicines, addMedicine, updateMedicine, deleteMedicine, medicineUpload, uploadMedicineImage,
   // Appointments
   getAllAppointments, updateAppointmentStatus,
   // Orders
@@ -37,6 +37,7 @@ router.delete('/users/:id', deleteUser);
 // Doctors
 router.get('/doctors', getAllDoctors);
 router.post('/doctors', addDoctor);
+router.post('/doctors/upload-image', doctorUpload.single('image'), uploadDoctorImage);
 router.get('/users/:id/doctor-profile', getUserDoctorProfile);
 router.put('/users/:id/doctor-profile', updateUserDoctorProfile);
 router.delete('/doctors/:id', deleteDoctor);
@@ -44,6 +45,7 @@ router.delete('/doctors/:id', deleteDoctor);
 // Medicines
 router.get('/medicines', getAllMedicines);
 router.post('/medicines', addMedicine);
+router.post('/medicines/upload-image', medicineUpload.single('image'), uploadMedicineImage);
 router.put('/medicines/:id', updateMedicine);
 router.delete('/medicines/:id', deleteMedicine);
 

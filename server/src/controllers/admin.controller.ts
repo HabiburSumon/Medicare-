@@ -1,4 +1,7 @@
 import { Response } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import User from '../models/User';
 import Doctor from '../models/Doctor';
 import Patient from '../models/Patient';
@@ -9,6 +12,42 @@ import Review from '../models/Review';
 import Prescription from '../models/Prescription';
 import Notification from '../models/Notification';
 import { AuthRequest } from '../middleware/auth';
+
+// Ensure upload directories exist
+const uploadDirs = ['uploads/doctors', 'uploads/medicines'];
+uploadDirs.forEach(dir => {
+  const fullPath = path.join(__dirname, '..', dir);
+  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
+});
+
+// Multer storage config
+const createStorage = (subDir: string) => multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, path.join(__dirname, '..', 'uploads', subDir)),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${subDir}-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`);
+  },
+});
+
+const fileFilter = (_req: any, file: any, cb: any) => {
+  const allowed = /jpeg|jpg|png|gif|webp/;
+  const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+  const mime = file.mimetype.startsWith('image/');
+  if (ext && mime) cb(null, true);
+  else cb(new Error('Only image files are allowed'));
+};
+
+export const doctorUpload = multer({
+  storage: createStorage('doctors'),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter,
+});
+
+export const medicineUpload = multer({
+  storage: createStorage('medicines'),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter,
+});
 
 export const getDashboardStats = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -129,14 +168,16 @@ export const updateUserDoctorProfile = async (req: AuthRequest, res: Response): 
 
 export const addDoctor = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { name, email, phone, password, specialization, experience, qualification, bio, consultationFee, availableDays, timeSlots, languages, clinicAddress } = req.body;
+    const { name, email, phone, password, specialization, experience, qualification, bio, consultationFee, availableDays, timeSlots, languages, clinicAddress, avatar } = req.body;
     
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) { res.status(400).json({ success: false, message: 'Email already exists' }); return; }
     
-    // Create user with doctor role
-    const user = await User.create({ name, email, phone, password, role: 'doctor' });
+    // Create user with doctor role (include avatar if uploaded before creation)
+    const userData: any = { name, email, phone, password, role: 'doctor' };
+    if (avatar) userData.avatar = avatar;
+    const user = await User.create(userData);
     
     // Create doctor profile
     const doctor = await Doctor.create({
@@ -351,6 +392,46 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
     const total = await Notification.countDocuments();
     const notifications = await Notification.find().sort({ createdAt: -1 }).skip((+page - 1) * +limit).limit(+limit).populate('recipient', 'name email role');
     res.json({ success: true, data: notifications, total, page: +page, totalPages: Math.ceil(total / +limit) });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ===== IMAGE UPLOAD: DOCTOR AVATAR =====
+export const uploadDoctorImage = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
+
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const imageUrl = `${serverUrl}/uploads/doctors/${req.file.filename}`;
+
+    // Update user avatar if userId provided
+    const { userId } = req.body;
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { avatar: imageUrl });
+    }
+
+    res.json({ success: true, data: { url: imageUrl } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ===== IMAGE UPLOAD: MEDICINE IMAGE =====
+export const uploadMedicineImage = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
+
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const imageUrl = `${serverUrl}/uploads/medicines/${req.file.filename}`;
+
+    // Update medicine image if medicineId provided
+    const { medicineId } = req.body;
+    if (medicineId) {
+      await Medicine.findByIdAndUpdate(medicineId, { image: imageUrl });
+    }
+
+    res.json({ success: true, data: { url: imageUrl } });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

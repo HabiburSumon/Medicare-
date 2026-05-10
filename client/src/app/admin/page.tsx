@@ -226,6 +226,49 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Doctor/Medicine image upload
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleDoctorImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const userId = formData.user?._id || formData.user;
+      if (userId) fd.append('userId', userId);
+      const r = await api.post('/admin/doctors/upload-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setFormData(prev => ({
+        ...prev,
+        avatar: r.data.data?.url,
+        user: typeof prev.user === 'object' ? { ...prev.user, avatar: r.data.data?.url } : prev.user,
+      }));
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to upload image');
+    }
+    setUploadingImage(false);
+    e.target.value = '';
+  };
+
+  const handleMedicineImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const medId = formData._id;
+      if (medId) fd.append('medicineId', medId);
+      const r = await api.post('/admin/medicines/upload-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setFormData(prev => ({ ...prev, image: r.data.data?.url }));
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to upload image');
+    }
+    setUploadingImage(false);
+    e.target.value = '';
+  };
+
   if (checking) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>;
   if (!isAdmin) return null;
 
@@ -369,7 +412,11 @@ export default function AdminDashboardPage() {
                     {doctors.filter((d: any) => !searchQuery || d.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || d.specialization?.toLowerCase().includes(searchQuery.toLowerCase())).map((doc: any) => (
                       <div key={doc._id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg transition-shadow">
                         <div className="flex items-start space-x-3 mb-4">
-                          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center text-blue-700 font-bold text-xl flex-shrink-0">{doc.user?.name?.charAt(0) || 'D'}</div>
+                          {doc.user?.avatar ? (
+                            <img src={doc.user.avatar} alt={doc.user?.name} className="w-14 h-14 rounded-2xl object-cover flex-shrink-0 border-2 border-blue-200 shadow-sm" />
+                          ) : (
+                            <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center text-blue-700 font-bold text-xl flex-shrink-0">{doc.user?.name?.charAt(0) || 'D'}</div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-gray-900 truncate">{doc.user?.name || 'Unknown'}</p>
                             <p className="text-sm text-blue-600 font-medium">{doc.specialization}</p>
@@ -415,7 +462,11 @@ export default function AdminDashboardPage() {
                           <tr key={med._id} className="hover:bg-gray-50/50">
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-lg">💊</div>
+                                {med.image ? (
+                                  <img src={med.image} alt={med.name} className="w-10 h-10 rounded-xl object-cover border border-blue-100 shadow-sm" />
+                                ) : (
+                                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-lg">💊</div>
+                                )}
                                 <div><p className="text-sm font-semibold">{med.name}</p><p className="text-xs text-gray-400">{med.genericName || med.brand || '-'}</p></div>
                               </div>
                             </td>
@@ -894,6 +945,28 @@ export default function AdminDashboardPage() {
                       <div><label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fee (৳)</label><input type="number" value={formData.consultationFee || ''} onChange={e => setFormData({ ...formData, consultationFee: +e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
                     </div>
                     <div><label className="block text-sm font-medium text-gray-700 mb-1">Bio</label><textarea value={formData.bio || ''} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" /></div>
+                    {/* Doctor Image Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Doctor Photo</label>
+                      <div className="flex items-center gap-4">
+                        {(formData.avatar || formData.user?.avatar) ? (
+                          <div className="relative group">
+                            <img src={formData.avatar || formData.user?.avatar} alt="Doctor" className="w-20 h-20 rounded-2xl object-cover border-2 border-blue-200 shadow-sm" />
+                            <button onClick={() => setFormData(prev => ({ ...prev, avatar: '', user: typeof prev.user === 'object' ? { ...prev.user, avatar: '' } : prev.user }))} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 text-2xl border-2 border-dashed border-gray-300">👤</div>
+                        )}
+                        <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-semibold hover:bg-blue-100 cursor-pointer transition-colors">
+                          {uploadingImage ? (
+                            <><div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div> Uploading...</>
+                          ) : (
+                            <>📸 Upload Photo</>
+                          )}
+                          <input type="file" accept="image/*" onChange={handleDoctorImageUpload} className="hidden" disabled={uploadingImage} />
+                        </label>
+                      </div>
+                    </div>
                   </>
                 )}
 
@@ -924,6 +997,28 @@ export default function AdminDashboardPage() {
                       <label htmlFor="rxRequired" className="text-sm font-medium text-gray-700">Prescription Required</label>
                     </div>
                     <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" /></div>
+                    {/* Medicine Image Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Medicine Image</label>
+                      <div className="flex items-center gap-4">
+                        {formData.image ? (
+                          <div className="relative group">
+                            <img src={formData.image} alt="Medicine" className="w-20 h-20 rounded-2xl object-cover border-2 border-blue-200 shadow-sm" />
+                            <button onClick={() => setFormData(prev => ({ ...prev, image: '' }))} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 text-2xl border-2 border-dashed border-gray-300">💊</div>
+                        )}
+                        <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-semibold hover:bg-blue-100 cursor-pointer transition-colors">
+                          {uploadingImage ? (
+                            <><div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div> Uploading...</>
+                          ) : (
+                            <>📸 Upload Image</>
+                          )}
+                          <input type="file" accept="image/*" onChange={handleMedicineImageUpload} className="hidden" disabled={uploadingImage} />
+                        </label>
+                      </div>
+                    </div>
                   </>
                 )}
 
