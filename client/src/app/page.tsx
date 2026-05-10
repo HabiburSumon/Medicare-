@@ -129,8 +129,19 @@ export default function HomePage() {
     if (currentSlide >= totalSlides) setCurrentSlide(0);
   }, [totalSlides, currentSlide]);
 
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(faq => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+    })),
+  };
+
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       {/* ========== HERO BANNER ========== */}
       {(hero?.settings?.slides?.length > 0) ? (
         /* Hero with uploaded media slides */
