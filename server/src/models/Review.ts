@@ -1,27 +1,41 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IReview extends Document {
-  patient: Types.ObjectId;
-  doctor: Types.ObjectId;
-  appointment: Types.ObjectId;
+interface ReviewAttributes {
+  id: number;
+  patientId: number;
+  doctorId: number;
+  appointmentId: number;
   rating: number;
   comment: string;
   isApproved: boolean;
 }
 
-const reviewSchema = new Schema<IReview>(
+type ReviewCreationAttributes = Optional<ReviewAttributes, 'id' | 'comment' | 'isApproved'>;
+
+class Review extends Model<ReviewAttributes, ReviewCreationAttributes> implements ReviewAttributes {
+  public id!: number;
+  public patientId!: number;
+  public doctorId!: number;
+  public appointmentId!: number;
+  public rating!: number;
+  public comment!: string;
+  public isApproved!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Review.init(
   {
-    patient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    appointment: { type: Schema.Types.ObjectId, ref: 'Appointment', required: true },
-    rating: { type: Number, required: true, min: 1, max: 5 },
-    comment: { type: String, trim: true, maxlength: 500 },
-    isApproved: { type: Boolean, default: true },
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    patientId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    doctorId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    appointmentId: { type: DataTypes.INTEGER, allowNull: false, unique: true, references: { model: 'appointments', key: 'id' } },
+    rating: { type: DataTypes.INTEGER, allowNull: false, validate: { min: 1, max: 5 } },
+    comment: { type: DataTypes.TEXT, defaultValue: '' },
+    isApproved: { type: DataTypes.BOOLEAN, defaultValue: true },
   },
-  { timestamps: true }
+  { sequelize, modelName: 'Review', tableName: 'reviews' }
 );
 
-reviewSchema.index({ doctor: 1 });
-reviewSchema.index({ patient: 1, appointment: 1 }, { unique: true });
-
-export default mongoose.model<IReview>('Review', reviewSchema);
+export default Review;

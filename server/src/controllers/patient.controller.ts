@@ -1,29 +1,16 @@
 import { Response } from 'express';
 import Patient from '../models/Patient';
+import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 
 export const getPatientProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const patient = await Patient.findOne({ user: req.userId }).populate('user', 'name email phone avatar');
-    if (!patient) {
-      res.status(404).json({ success: false, message: 'Patient profile not found' });
-      return;
-    }
+    const patient = await Patient.findOne({
+      where: { userId: req.userId },
+      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone', 'avatar'] }],
+    });
+    if (!patient) { res.status(404).json({ success: false, message: 'Patient profile not found' }); return; }
     res.json({ success: true, data: patient });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const createPatientProfile = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const existing = await Patient.findOne({ user: req.userId });
-    if (existing) {
-      res.status(400).json({ success: false, message: 'Patient profile already exists' });
-      return;
-    }
-    const patient = await Patient.create({ ...req.body, user: req.userId });
-    res.status(201).json({ success: true, data: patient });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -31,28 +18,26 @@ export const createPatientProfile = async (req: AuthRequest, res: Response): Pro
 
 export const updatePatientProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const patient = await Patient.findOneAndUpdate(
-      { user: req.userId },
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('user', 'name email phone avatar');
-
-    if (!patient) {
-      res.status(404).json({ success: false, message: 'Patient profile not found' });
-      return;
-    }
-    res.json({ success: true, data: patient });
+    const patient = await Patient.findOne({ where: { userId: req.userId } });
+    if (!patient) { res.status(404).json({ success: false, message: 'Patient profile not found' }); return; }
+    await patient.update(req.body);
+    const updated = await Patient.findByPk(patient.id, {
+      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone', 'avatar'] }],
+    });
+    res.json({ success: true, data: updated });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-export const getAllPatients = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getPatientById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const patients = await Patient.find()
-      .populate('user', 'name email phone avatar isActive')
-      .sort({ createdAt: -1 });
-    res.json({ success: true, data: patients });
+    const patient = await Patient.findOne({
+      where: { userId: req.params.id },
+      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone', 'avatar'] }],
+    });
+    if (!patient) { res.status(404).json({ success: false, message: 'Patient not found' }); return; }
+    res.json({ success: true, data: patient });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

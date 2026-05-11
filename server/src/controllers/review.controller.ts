@@ -6,76 +6,42 @@ import { AuthRequest } from '../middleware/auth';
 export const createReview = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { doctorId, appointmentId, rating, comment } = req.body;
+    const existing = await Review.findOne({ where: { patientId: req.userId, appointmentId } });
+    if (existing) { res.status(400).json({ success: false, message: 'Review already exists for this appointment' }); return; }
 
-    const existing = await Review.findOne({ patient: req.userId, appointment: appointmentId });
-    if (existing) {
-      res.status(400).json({ success: false, message: 'Review already exists for this appointment' });
-      return;
-    }
-
-    const review = await Review.create({
-      patient: req.userId,
-      doctor: doctorId,
-      appointment: appointmentId,
-      rating,
-      comment,
-    });
+    const review = await Review.create({ patientId: req.userId!, doctorId, appointmentId, rating, comment });
 
     // Update doctor's average rating
-    const stats = await Review.aggregate([
-      { $match: { doctor: review.doctor } },
-      { $group: { _id: '$doctor', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } },
-    ]);
-
-    if (stats.length > 0) {
-      await Doctor.findOneAndUpdate(
-        { user: review.doctor },
-        { rating: Math.round(stats[0].avgRating * 10) / 10, totalReviews: stats[0].count }
-      );
-    }
+    const reviews = await Review.findAll({ where: { doctorId } });
+    const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    await Doctor.update({ rating: Math.round(avgRating * 10) / 10 }, { where: { userId: doctorId } });
 
     res.status(201).json({ success: true, data: review });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+  } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
 };
 
 export const getDoctorReviews = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const reviews = await Review.find({ doctor: req.params.doctorId, isApproved: true })
-      .populate('patient', 'name avatar')
-      .sort({ createdAt: -1 });
+    const reviews = await Review.findAll({
+      where: { doctorId: req.params.doctorId, isApproved: true },
+      order: [['createdAt', 'DESC']],
+    });
     res.json({ success: true, data: reviews });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+  } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
 };
 
 export const getAllReviews = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const reviews = await Review.find()
-      .populate('patient', 'name avatar')
-      .populate('doctor', 'name avatar')
-      .sort({ createdAt: -1 });
+    const reviews = await Review.findAll({ order: [['createdAt', 'DESC']] });
     res.json({ success: true, data: reviews });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+  } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
 };
 
 export const moderateReview = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      { isApproved: req.body.isApproved },
-      { new: true }
-    );
-    if (!review) {
-      res.status(404).json({ success: false, message: 'Review not found' });
-      return;
-    }
+    const review = await Review.findByPk(req.params.id);
+    if (!review) { res.status(404).json({ success: false, message: 'Review not found' }); return; }
+    await review.update({ isApproved: req.body.isApproved });
     res.json({ success: true, data: review });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+  } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
 };

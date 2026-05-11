@@ -1,60 +1,59 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IOrderItem {
-  medicine: Types.ObjectId;
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-export interface IOrder extends Document {
-  patient: Types.ObjectId;
-  prescription?: Types.ObjectId;
-  items: IOrderItem[];
+interface OrderAttributes {
+  id: number;
+  patientId: number;
+  prescriptionId: number | null;
+  items: string; // JSON array of {medicineId, name, quantity, price}
   totalAmount: number;
   discountAmount: number;
   finalAmount: number;
-  couponCode?: string;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  paymentId?: string;
+  couponCode: string;
+  status: string;
+  paymentStatus: string;
+  paymentId: string;
   shippingAddress: string;
   phone: string;
 }
 
-const orderItemSchema = new Schema<IOrderItem>({
-  medicine: { type: Schema.Types.ObjectId, ref: 'Medicine', required: true },
-  name: { type: String, required: true },
-  quantity: { type: Number, required: true, min: 1 },
-  price: { type: Number, required: true },
-});
+type OrderCreationAttributes = Optional<OrderAttributes, 'id' | 'prescriptionId' | 'discountAmount' | 'couponCode' | 'status' | 'paymentStatus' | 'paymentId'>;
 
-const orderSchema = new Schema<IOrder>(
+class Order extends Model<OrderAttributes, OrderCreationAttributes> implements OrderAttributes {
+  public id!: number;
+  public patientId!: number;
+  public prescriptionId!: number | null;
+  public items!: string;
+  public totalAmount!: number;
+  public discountAmount!: number;
+  public finalAmount!: number;
+  public couponCode!: string;
+  public status!: string;
+  public paymentStatus!: string;
+  public paymentId!: string;
+  public shippingAddress!: string;
+  public phone!: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Order.init(
   {
-    patient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    prescription: { type: Schema.Types.ObjectId, ref: 'Prescription' },
-    items: [orderItemSchema],
-    totalAmount: { type: Number, required: true },
-    discountAmount: { type: Number, default: 0 },
-    finalAmount: { type: Number, required: true },
-    couponCode: { type: String, trim: true },
-    status: {
-      type: String,
-      enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
-      default: 'pending',
-    },
-    paymentStatus: {
-      type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded'],
-      default: 'pending',
-    },
-    paymentId: { type: String },
-    shippingAddress: { type: String, required: true, trim: true },
-    phone: { type: String, required: true, trim: true },
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    patientId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    prescriptionId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'prescriptions', key: 'id' } },
+    items: { type: DataTypes.TEXT, allowNull: false, defaultValue: '[]' },
+    totalAmount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    discountAmount: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
+    finalAmount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    couponCode: { type: DataTypes.STRING(50), defaultValue: '' },
+    status: { type: DataTypes.ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'), defaultValue: 'pending' },
+    paymentStatus: { type: DataTypes.ENUM('pending', 'paid', 'failed', 'refunded'), defaultValue: 'pending' },
+    paymentId: { type: DataTypes.STRING(255), defaultValue: '' },
+    shippingAddress: { type: DataTypes.TEXT, allowNull: false },
+    phone: { type: DataTypes.STRING(20), allowNull: false },
   },
-  { timestamps: true }
+  { sequelize, modelName: 'Order', tableName: 'orders' }
 );
 
-orderSchema.index({ patient: 1 });
-
-export default mongoose.model<IOrder>('Order', orderSchema);
+export default Order;

@@ -3,10 +3,12 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
+
+import sequelize from './config/database';
+import './models/index'; // Load all models and associations
 
 import authRoutes from './routes/auth.routes';
 import doctorRoutes from './routes/doctor.routes';
@@ -84,12 +86,15 @@ setupSocketIO(io);
 
 // Database connection and server start
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/doctor-appointment';
 
-mongoose
-  .connect(MONGODB_URI)
+sequelize
+  .authenticate()
   .then(() => {
-    console.log('✅ Connected to MongoDB');
+    console.log('✅ Connected to MySQL database');
+    return sequelize.sync({ alter: true });
+  })
+  .then(() => {
+    console.log('✅ Database models synchronized');
     httpServer.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📡 Socket.IO ready`);
@@ -97,7 +102,7 @@ mongoose
     });
   })
   .catch((error) => {
-    console.error('❌ MongoDB connection error:', error);
+    console.error('❌ MySQL connection error:', error);
     process.exit(1);
   });
 

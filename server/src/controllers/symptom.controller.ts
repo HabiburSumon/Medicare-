@@ -2,114 +2,126 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 
 interface SymptomRule {
-  symptoms: string[];
+  conditions: string[];
   possibleConditions: string[];
-  suggestedSpecializations: string[];
-  severity: 'low' | 'medium' | 'high';
+  suggestedDoctors: string[];
+  severity: string;
   advice: string;
 }
 
-const symptomDatabase: SymptomRule[] = [
+const symptomRules: SymptomRule[] = [
   {
-    symptoms: ['headache', 'fever', 'body ache', 'fatigue'],
-    possibleConditions: ['Common Cold', 'Flu (Influenza)', 'Viral Infection'],
-    suggestedSpecializations: ['General Physician', 'Internal Medicine'],
-    severity: 'low',
-    advice: 'Rest, stay hydrated, and take over-the-counter pain relievers. Consult a doctor if symptoms persist.',
+    conditions: ['fever', 'headache', 'body pain', 'fatigue'],
+    possibleConditions: ['Flu', 'Common Cold', 'Dengue Fever', 'Malaria'],
+    suggestedDoctors: ['General Physician', 'Internal Medicine'],
+    severity: 'moderate',
+    advice: 'Rest, stay hydrated, and monitor your temperature. If fever persists above 103°F, seek immediate medical attention.',
   },
   {
-    symptoms: ['chest pain', 'shortness of breath', 'dizziness', 'palpitation'],
-    possibleConditions: ['Heart-related condition', 'Anxiety/Panic attack', 'Acid reflux'],
-    suggestedSpecializations: ['Cardiologist', 'General Physician'],
-    severity: 'high',
-    advice: 'Seek immediate medical attention if chest pain is severe. Call emergency services.',
+    conditions: ['cough', 'sore throat', 'runny nose', 'congestion'],
+    possibleConditions: ['Common Cold', 'Bronchitis', 'Sinusitis', 'Allergies'],
+    suggestedDoctors: ['General Physician', 'ENT Specialist'],
+    severity: 'mild',
+    advice: 'Rest, drink warm fluids, and use over-the-counter cold medicine if needed.',
   },
   {
-    symptoms: ['skin rash', 'itching', 'redness', 'swelling'],
-    possibleConditions: ['Allergic reaction', 'Eczema', 'Contact Dermatitis', 'Psoriasis'],
-    suggestedSpecializations: ['Dermatologist', 'Allergist'],
-    severity: 'low',
-    advice: 'Avoid scratching, apply moisturizer. Consult a dermatologist for proper diagnosis.',
+    conditions: ['chest pain', 'shortness of breath', 'dizziness', 'palpitation'],
+    possibleConditions: ['Heart Disease', 'Anxiety', 'Acid Reflux', 'Lung Disease'],
+    suggestedDoctors: ['Cardiologist', 'Pulmonologist'],
+    severity: 'severe',
+    advice: 'Seek immediate medical attention if chest pain is severe or accompanied by shortness of breath.',
   },
   {
-    symptoms: ['stomach pain', 'nausea', 'vomiting', 'diarrhea', 'bloating'],
+    conditions: ['stomach pain', 'nausea', 'vomiting', 'diarrhea', 'bloating'],
     possibleConditions: ['Gastroenteritis', 'Food Poisoning', 'IBS', 'Gastric Ulcer'],
-    suggestedSpecializations: ['Gastroenterologist', 'General Physician'],
-    severity: 'medium',
-    advice: 'Stay hydrated, eat bland foods. Seek medical help if symptoms are severe or persistent.',
+    suggestedDoctors: ['Gastroenterologist', 'General Physician'],
+    severity: 'moderate',
+    advice: 'Stay hydrated, eat bland foods, and avoid spicy or oily food.',
   },
   {
-    symptoms: ['cough', 'sore throat', 'runny nose', 'congestion', 'sneezing'],
-    possibleConditions: ['Common Cold', 'Allergic Rhinitis', 'Sinusitis', 'Bronchitis'],
-    suggestedSpecializations: ['ENT Specialist', 'General Physician', 'Pulmonologist'],
-    severity: 'low',
-    advice: 'Rest, warm fluids, and over-the-counter cold medications. See a doctor if cough persists.',
+    conditions: ['skin rash', 'itching', 'redness', 'swelling', 'acne'],
+    possibleConditions: ['Allergic Reaction', 'Eczema', 'Psoriasis', 'Dermatitis'],
+    suggestedDoctors: ['Dermatologist'],
+    severity: 'mild',
+    advice: 'Avoid scratching, apply moisturizer, and identify potential allergens.',
   },
   {
-    symptoms: ['back pain', 'joint pain', 'stiffness', 'swelling joints'],
-    possibleConditions: ['Arthritis', 'Muscle Strain', 'Sciatica', 'Osteoporosis'],
-    suggestedSpecializations: ['Orthopedic', 'Rheumatologist'],
-    severity: 'medium',
-    advice: 'Rest, apply hot/cold compress. Consult specialist for chronic pain.',
+    conditions: ['joint pain', 'back pain', 'muscle pain', 'stiffness', 'swelling'],
+    possibleConditions: ['Arthritis', 'Muscle Strain', 'Osteoporosis', 'Fibromyalgia'],
+    suggestedDoctors: ['Orthopedic', 'Rheumatologist'],
+    severity: 'moderate',
+    advice: 'Rest the affected area, apply ice/heat, and avoid heavy lifting.',
   },
   {
-    symptoms: ['anxiety', 'depression', 'insomnia', 'mood swings', 'stress'],
-    possibleConditions: ['Anxiety Disorder', 'Depression', 'Stress-related condition'],
-    suggestedSpecializations: ['Psychiatrist', 'Psychologist', 'Counselor'],
-    severity: 'medium',
-    advice: 'Talk to someone you trust. Professional help is recommended for persistent symptoms.',
+    conditions: ['headache', 'migraine', 'blurred vision', 'dizziness', 'confusion'],
+    possibleConditions: ['Migraine', 'Tension Headache', 'Hypertension', 'Vision Problems'],
+    suggestedDoctors: ['Neurologist', 'Ophthalmologist'],
+    severity: 'moderate',
+    advice: 'Rest in a dark room, stay hydrated, and avoid screen time.',
   },
   {
-    symptoms: ['blurred vision', 'eye pain', 'red eyes', 'headache'],
-    possibleConditions: ['Eye Strain', 'Conjunctivitis', 'Glaucoma', 'Migraine'],
-    suggestedSpecializations: ['Ophthalmologist', 'Neurologist'],
-    severity: 'medium',
-    advice: 'Rest your eyes, reduce screen time. See an eye specialist promptly.',
+    conditions: ['anxiety', 'depression', 'insomnia', 'mood changes', 'stress'],
+    possibleConditions: ['Anxiety Disorder', 'Depression', 'Bipolar Disorder', 'Stress'],
+    suggestedDoctors: ['Psychiatrist', 'Psychologist'],
+    severity: 'moderate',
+    advice: 'Practice relaxation techniques, maintain a routine, and talk to someone you trust.',
   },
   {
-    symptoms: ['frequent urination', 'thirst', 'fatigue', 'weight loss'],
-    possibleConditions: ['Diabetes', 'Urinary Tract Infection', 'Thyroid Disorder'],
-    suggestedSpecializations: ['Endocrinologist', 'General Physician', 'Urologist'],
-    severity: 'medium',
-    advice: 'Get blood sugar and thyroid levels checked. Consult a doctor.',
+    conditions: ['frequent urination', 'blood in urine', 'kidney pain', 'swelling'],
+    possibleConditions: ['UTI', 'Kidney Stones', 'Kidney Disease', 'Bladder Infection'],
+    suggestedDoctors: ['Nephrologist', 'Urologist'],
+    severity: 'moderate',
+    advice: 'Drink plenty of water and seek medical attention if you see blood in urine.',
   },
   {
-    symptoms: ['breathing difficulty', 'wheezing', 'chronic cough', 'chest tightness'],
-    possibleConditions: ['Asthma', 'COPD', 'Pneumonia', 'Bronchitis'],
-    suggestedSpecializations: ['Pulmonologist', 'General Physician'],
-    severity: 'high',
-    advice: 'Seek immediate medical attention for severe breathing difficulty.',
+    conditions: ['weight gain', 'weight loss', 'fatigue', 'hair loss', 'hot flashes'],
+    possibleConditions: ['Thyroid Disorder', 'Diabetes', 'Hormonal Imbalance'],
+    suggestedDoctors: ['Endocrinologist', 'General Physician'],
+    severity: 'moderate',
+    advice: 'Get blood tests done and maintain a healthy diet and exercise routine.',
   },
 ];
 
 export const analyzeSymptoms = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { symptoms } = req.body;
-
     if (!symptoms || !Array.isArray(symptoms) || symptoms.length === 0) {
       res.status(400).json({ success: false, message: 'Please provide symptoms array' });
       return;
     }
 
     const normalizedSymptoms = symptoms.map((s: string) => s.toLowerCase().trim());
+    const results: any[] = [];
+    const matchedConditions = new Set<string>();
+    const matchedDoctors = new Set<string>();
+    let maxSeverity = 'mild';
 
-    // Score each condition based on symptom matches
-    const results = symptomDatabase.map((rule) => {
-      const matchCount = normalizedSymptoms.filter((s: string) =>
-        rule.symptoms.some((rs) => rs.includes(s) || s.includes(rs))
+    for (const rule of symptomRules) {
+      const matchCount = rule.conditions.filter((c) =>
+        normalizedSymptoms.some((s) => s.includes(c) || c.includes(s))
       ).length;
-      const matchPercentage = (matchCount / rule.symptoms.length) * 100;
-      return { ...rule, matchPercentage: Math.round(matchPercentage) };
-    }).filter((r) => r.matchPercentage > 0).sort((a, b) => b.matchPercentage - a.matchPercentage);
 
-    const disclaimer = '⚠️ This symptom checker provides general guidance only and does NOT replace professional medical diagnosis. Please consult a qualified healthcare provider for accurate diagnosis and treatment.';
+      if (matchCount > 0) {
+        const score = matchCount / rule.conditions.length;
+        rule.possibleConditions.forEach((c) => matchedConditions.add(c));
+        rule.suggestedDoctors.forEach((d) => matchedDoctors.add(d));
+        if (rule.severity === 'severe') maxSeverity = 'severe';
+        else if (rule.severity === 'moderate' && maxSeverity !== 'severe') maxSeverity = 'moderate';
+        results.push({ ...rule, score });
+      }
+    }
+
+    results.sort((a, b) => b.score - a.score);
 
     res.json({
       success: true,
       data: {
-        results: results.slice(0, 3),
-        disclaimer,
-        inputSymptoms: normalizedSymptoms,
+        symptoms: normalizedSymptoms,
+        possibleConditions: Array.from(matchedConditions),
+        suggestedDoctors: Array.from(matchedDoctors),
+        severity: maxSeverity,
+        topResults: results.slice(0, 3),
+        disclaimer: 'This is NOT a medical diagnosis. Please consult a qualified healthcare professional for proper medical advice and treatment.',
       },
     });
   } catch (error: any) {

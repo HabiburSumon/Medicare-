@@ -1,39 +1,44 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IWebsiteContent extends Document {
+interface WebsiteContentAttributes {
+  id: number;
   section: string;
   title: string;
-  subtitle?: string;
-  description?: string;
-  image?: string;
-  items?: Array<{
-    icon?: string;
-    title: string;
-    description?: string;
-    link?: string;
-    image?: string;
-    [key: string]: any;
-  }>;
-  settings?: {
-    [key: string]: any;
-  };
-  updatedAt: Date;
+  subtitle: string;
+  description: string;
+  image: string;
+  items: string; // JSON array
+  settings: string; // JSON object
 }
 
-const WebsiteContentSchema = new Schema<IWebsiteContent>({
-  section: { type: String, required: true, unique: true, index: true },
-  title: { type: String, default: '' },
-  subtitle: { type: String, default: '' },
-  description: { type: String, default: '' },
-  image: { type: String, default: '' },
-  items: [{
-    icon: { type: String, default: '' },
-    title: { type: String, default: '' },
-    description: { type: String, default: '' },
-    link: { type: String, default: '' },
-    image: { type: String, default: '' },
-  }],
-  settings: { type: Schema.Types.Mixed, default: {} },
-}, { timestamps: true });
+type WebsiteContentCreationAttributes = Optional<WebsiteContentAttributes, 'id' | 'title' | 'subtitle' | 'description' | 'image' | 'items' | 'settings'>;
 
-export default mongoose.model<IWebsiteContent>('WebsiteContent', WebsiteContentSchema);
+class WebsiteContent extends Model<WebsiteContentAttributes, WebsiteContentCreationAttributes> implements WebsiteContentAttributes {
+  public id!: number;
+  public section!: string;
+  public title!: string;
+  public subtitle!: string;
+  public description!: string;
+  public image!: string;
+  public items!: string;
+  public settings!: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+WebsiteContent.init(
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    section: { type: DataTypes.STRING(100), allowNull: false, unique: true },
+    title: { type: DataTypes.STRING(255), defaultValue: '' },
+    subtitle: { type: DataTypes.STRING(255), defaultValue: '' },
+    description: { type: DataTypes.TEXT, defaultValue: '' },
+    image: { type: DataTypes.STRING(500), defaultValue: '' },
+    items: { type: DataTypes.TEXT, defaultValue: '[]' },
+    settings: { type: DataTypes.TEXT, defaultValue: '{}' },
+  },
+  { sequelize, modelName: 'WebsiteContent', tableName: 'website_contents' }
+);
+
+export default WebsiteContent;

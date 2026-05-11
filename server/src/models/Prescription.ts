@@ -1,55 +1,53 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IPrescription extends Document {
-  appointment: Types.ObjectId;
-  patient: Types.ObjectId;
-  doctor: Types.ObjectId;
+interface PrescriptionAttributes {
+  id: number;
+  appointmentId: number;
+  patientId: number;
+  doctorId: number;
   diagnosis: string;
-  symptoms: string[];
-  medicines: {
-    name: string;
-    dosage: string;
-    duration: string;
-    instructions: string;
-  }[];
-  tests?: string[];
-  testResults?: {
-    testName: string;
-    fileUrl: string;
-    fileName: string;
-    uploadedAt: Date;
-  }[];
-  notes?: string;
-  followUpDate?: Date;
+  symptoms: string; // JSON array
+  medicines: string; // JSON array of {name, dosage, duration, instructions}
+  tests: string; // JSON array
+  testResults: string; // JSON array
+  notes: string;
+  followUpDate: Date | null;
 }
 
-const prescriptionSchema = new Schema<IPrescription>(
+type PrescriptionCreationAttributes = Optional<PrescriptionAttributes, 'id' | 'symptoms' | 'tests' | 'testResults' | 'notes' | 'followUpDate'>;
+
+class Prescription extends Model<PrescriptionAttributes, PrescriptionCreationAttributes> implements PrescriptionAttributes {
+  public id!: number;
+  public appointmentId!: number;
+  public patientId!: number;
+  public doctorId!: number;
+  public diagnosis!: string;
+  public symptoms!: string;
+  public medicines!: string;
+  public tests!: string;
+  public testResults!: string;
+  public notes!: string;
+  public followUpDate!: Date | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Prescription.init(
   {
-    appointment: { type: Schema.Types.ObjectId, ref: 'Appointment', required: true },
-    patient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    diagnosis: { type: String, required: true, trim: true },
-    symptoms: [{ type: String, trim: true }],
-    medicines: [{
-      name: { type: String, required: true, trim: true },
-      dosage: { type: String, required: true, trim: true },
-      duration: { type: String, required: true, trim: true },
-      instructions: { type: String, trim: true },
-    }],
-    tests: [{ type: String, trim: true }],
-    testResults: [{
-      testName: { type: String, required: true, trim: true },
-      fileUrl: { type: String, required: true },
-      fileName: { type: String, required: true },
-      uploadedAt: { type: Date, default: Date.now },
-    }],
-    notes: { type: String, trim: true },
-    followUpDate: { type: Date },
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    appointmentId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'appointments', key: 'id' } },
+    patientId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    doctorId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    diagnosis: { type: DataTypes.TEXT, allowNull: false },
+    symptoms: { type: DataTypes.TEXT, defaultValue: '[]' },
+    medicines: { type: DataTypes.TEXT, allowNull: false, defaultValue: '[]' },
+    tests: { type: DataTypes.TEXT, defaultValue: '[]' },
+    testResults: { type: DataTypes.TEXT, defaultValue: '[]' },
+    notes: { type: DataTypes.TEXT, defaultValue: '' },
+    followUpDate: { type: DataTypes.DATE, allowNull: true },
   },
-  { timestamps: true }
+  { sequelize, modelName: 'Prescription', tableName: 'prescriptions' }
 );
 
-prescriptionSchema.index({ patient: 1 });
-prescriptionSchema.index({ doctor: 1 });
-
-export default mongoose.model<IPrescription>('Prescription', prescriptionSchema);
+export default Prescription;

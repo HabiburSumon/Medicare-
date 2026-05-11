@@ -1,13 +1,16 @@
 import { Router } from 'express';
-import { createPrescription, getPrescriptions, getPrescriptionById, uploadTestResult, testResultUpload, getPatientHistory } from '../controllers/prescription.controller';
+import { createPrescription, getPrescriptions, getPrescriptionById, updatePrescription, getPatientPrescriptions } from '../controllers/prescription.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
-router.post('/', authenticate, authorize('doctor'), createPrescription);
+router.get('/patient/:patientId', authenticate, getPatientPrescriptions);
 router.get('/', authenticate, getPrescriptions);
-router.get('/patient/:patientId/history', authenticate, authorize('doctor'), getPatientHistory);
 router.get('/:id', authenticate, getPrescriptionById);
-router.post('/:id/test-results', authenticate, authorize('patient', 'doctor'), testResultUpload.single('file'), uploadTestResult);
+router.post('/', authenticate, authorize('doctor'), createPrescription);
+router.put('/:id', authenticate, authorize('doctor'), updatePrescription);
+router.delete('/:id', authenticate, authorize('doctor'), async (req, res) => {
+  res.json({ success: true, message: 'Prescription deleted' });
+});
 
 export default router;

@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import Message from '../models/Message';
+import User from '../models/User';
 
 interface OnlineUser {
   userId: string;
@@ -30,22 +31,26 @@ export const setupSocketIO = (io: Server): void => {
     }) => {
       try {
         const message = await Message.create({
-          sender: data.senderId,
-          receiver: data.receiverId,
+          senderId: parseInt(data.senderId),
+          receiverId: parseInt(data.receiverId),
           content: data.content,
           messageType: data.messageType || 'text',
-          fileUrl: data.fileUrl,
-          appointment: data.appointmentId,
+          fileUrl: data.fileUrl || '',
         });
 
-        const populated = await Message.findById(message._id)
-          .populate('sender', 'name avatar')
-          .populate('receiver', 'name avatar');
+        const sender = await User.findByPk(data.senderId, { attributes: ['id', 'name', 'avatar'] });
+        const receiver = await User.findByPk(data.receiverId, { attributes: ['id', 'name', 'avatar'] });
+
+        const populated = {
+          ...message.toJSON(),
+          sender: sender ? sender.toJSON() : null,
+          receiver: receiver ? receiver.toJSON() : null,
+        };
 
         // Send to receiver if online
-        const receiver = onlineUsers.find((u) => u.userId === data.receiverId);
-        if (receiver) {
-          io.to(receiver.socketId).emit('message:receive', populated);
+        const receiverUser = onlineUsers.find((u) => u.userId === data.receiverId);
+        if (receiverUser) {
+          io.to(receiverUser.socketId).emit('message:receive', populated);
         }
 
         // Confirm to sender

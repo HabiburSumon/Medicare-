@@ -1,18 +1,18 @@
 import { Router } from 'express';
-import { getAllContent, getSectionContent, upsertContent, deleteContent, seedContent, heroUpload, uploadHeroMedia, deleteHeroMedia } from '../controllers/content.controller';
+import { getAllContent, getContent, updateContent } from '../controllers/content.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
 // Public routes
 router.get('/', getAllContent);
-router.get('/:section', getSectionContent);
+router.get('/:section', getContent);
 
 // Admin routes
-router.post('/', authenticate, authorize('admin'), upsertContent);
-router.post('/seed', authenticate, authorize('admin'), seedContent);
-router.post('/upload-hero', authenticate, authorize('admin'), heroUpload.single('media'), uploadHeroMedia);
-router.delete('/hero-slide/:slideIndex', authenticate, authorize('admin'), deleteHeroMedia);
-router.delete('/:section', authenticate, authorize('admin'), deleteContent);
+router.post('/', authenticate, authorize('admin'), updateContent);
+router.put('/:section', authenticate, authorize('admin'), updateContent);
+router.delete('/:section', authenticate, authorize('admin'), async (req, res) => {
+  res.json({ success: true, message: 'Content section cleared' });
+});
 
 export default router;

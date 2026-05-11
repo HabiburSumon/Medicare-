@@ -1,33 +1,44 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IMessage extends Document {
-  sender: Types.ObjectId;
-  receiver: Types.ObjectId;
-  appointment?: Types.ObjectId;
+interface MessageAttributes {
+  id: number;
+  senderId: number;
+  receiverId: number;
+  appointmentId: number | null;
   content: string;
-  messageType: 'text' | 'image' | 'file' | 'video';
-  fileUrl?: string;
+  messageType: string;
+  fileUrl: string;
   isRead: boolean;
 }
 
-const messageSchema = new Schema<IMessage>(
+type MessageCreationAttributes = Optional<MessageAttributes, 'id' | 'appointmentId' | 'content' | 'fileUrl' | 'isRead'>;
+
+class Message extends Model<MessageAttributes, MessageCreationAttributes> implements MessageAttributes {
+  public id!: number;
+  public senderId!: number;
+  public receiverId!: number;
+  public appointmentId!: number | null;
+  public content!: string;
+  public messageType!: string;
+  public fileUrl!: string;
+  public isRead!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Message.init(
   {
-    sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    receiver: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    appointment: { type: Schema.Types.ObjectId, ref: 'Appointment' },
-    content: { type: String, trim: true },
-    messageType: {
-      type: String,
-      enum: ['text', 'image', 'file', 'video'],
-      default: 'text',
-    },
-    fileUrl: { type: String },
-    isRead: { type: Boolean, default: false },
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    senderId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    receiverId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    appointmentId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'appointments', key: 'id' } },
+    content: { type: DataTypes.TEXT, defaultValue: '' },
+    messageType: { type: DataTypes.ENUM('text', 'image', 'file', 'video'), defaultValue: 'text' },
+    fileUrl: { type: DataTypes.STRING(500), defaultValue: '' },
+    isRead: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
-  { timestamps: true }
+  { sequelize, modelName: 'Message', tableName: 'messages' }
 );
 
-messageSchema.index({ sender: 1, receiver: 1 });
-messageSchema.index({ appointment: 1 });
-
-export default mongoose.model<IMessage>('Message', messageSchema);
+export default Message;

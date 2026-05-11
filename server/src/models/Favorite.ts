@@ -1,18 +1,29 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IFavorite extends Document {
-  patient: Types.ObjectId;
-  doctor: Types.ObjectId;
+interface FavoriteAttributes {
+  id: number;
+  patientId: number;
+  doctorId: number;
 }
 
-const favoriteSchema = new Schema<IFavorite>(
+type FavoriteCreationAttributes = Optional<FavoriteAttributes, 'id'>;
+
+class Favorite extends Model<FavoriteAttributes, FavoriteCreationAttributes> implements FavoriteAttributes {
+  public id!: number;
+  public patientId!: number;
+  public doctorId!: number;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Favorite.init(
   {
-    patient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    patientId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+    doctorId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
   },
-  { timestamps: true }
+  { sequelize, modelName: 'Favorite', tableName: 'favorites', indexes: [{ unique: true, fields: ['patientId', 'doctorId'] }] }
 );
 
-favoriteSchema.index({ patient: 1, doctor: 1 }, { unique: true });
-
-export default mongoose.model<IFavorite>('Favorite', favoriteSchema);
+export default Favorite;

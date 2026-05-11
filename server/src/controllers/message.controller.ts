@@ -1,51 +1,26 @@
 import { Response } from 'express';
-import multer from 'multer';
-import path from 'path';
+import { Op } from 'sequelize';
 import Message from '../models/Message';
 import { AuthRequest } from '../middleware/auth';
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads'));
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  },
-});
-
-export const upload = multer({
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-  fileFilter: (_req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp|mp4|avi|mov|pdf|doc|docx/;
-    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mime = allowed.test(file.mimetype.split('/')[1]) || file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/');
-    if (ext || mime) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'));
-    }
-  },
-});
-
 export const getMessages = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { receiverId } = req.params;
-    const messages = await Message.find({
-      $or: [
-        { sender: req.userId, receiver: receiverId },
-        { sender: receiverId, receiver: req.userId },
-      ],
-    }).sort({ createdAt: 1 });
-
+    const otherUserId = req.params.userId;
+    const messages = await Message.findAll({
+      where: {
+        [Op.or]: [
+          { senderId: req.userId, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: req.userId },
+        ],
+      },
+      order: [['createdAt', 'ASC']],
+      limit: 200,
+    });
     // Mark unread messages as read
-    await Message.updateMany(
-      { sender: receiverId, receiver: req.userId, isRead: false },
-      { isRead: true }
+    await Message.update(
+      { isRead: true },
+      { where: { senderId: otherUserId, receiverId: req.userId, isRead: false } }
     );
-
     res.json({ success: true, data: messages });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -54,40 +29,15 @@ export const getMessages = async (req: AuthRequest, res: Response): Promise<void
 
 export const sendMessage = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { receiverId, content, messageType = 'text', fileUrl, appointmentId } = req.body;
-
+    const { receiverId, content, messageType = 'text', fileUrl } = req.body;
     const message = await Message.create({
-      sender: req.userId,
-      receiver: receiverId,
+      senderId: req.userId!,
+      receiverId,
       content,
       messageType,
-      fileUrl,
-      appointment: appointmentId,
+      fileUrl: fileUrl || '',
     });
-
-    const populated = await Message.findById(message._id)
-      .populate('sender', 'name avatar')
-      .populate('receiver', 'name avatar');
-
-    res.status(201).json({ success: true, data: populated });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const uploadMessageFile = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ success: false, message: 'No file uploaded' });
-      return;
-    }
-
-    const fileUrl = `${process.env.SERVER_URL || 'http://localhost:5000'}/uploads/${req.file.filename}`;
-    let messageType = 'file';
-    if (req.file.mimetype.startsWith('image/')) messageType = 'image';
-    else if (req.file.mimetype.startsWith('video/')) messageType = 'video';
-
-    res.json({ success: true, data: { fileUrl, messageType, fileName: req.file.originalname } });
+    res.status(201).json({ success: true, data: message });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -95,41 +45,40 @@ export const uploadMessageFile = async (req: AuthRequest, res: Response): Promis
 
 export const getConversations = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const conversations = await Message.aggregate([
-      {
-        $match: {
-          $or: [{ sender: req.userId }, { receiver: req.userId }],
-        },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-      {
-        $group: {
-          _id: {
-            $cond: [
-              { $eq: ['$sender', req.userId] },
-              '$receiver',
-              '$sender',
-            ],
-          },
-          lastMessage: { $first: '$$ROOT' },
-          unreadCount: {
-            $sum: {
-              $cond: [
-                { $and: [{ $eq: ['$receiver', req.userId] }, { $eq: ['$isRead', false] }] },
-                1,
-                0,
-              ],
-            },
-          },
-        },
-      },
-      { $sort: { 'lastMessage.createdAt': -1 } },
-    ]);
+    // Get distinct conversation partners
+    const sent = await Message.findAll({
+      where: { senderId: req.userId },
+      attributes: ['receiverId'],
+      group: ['receiverId'],
+    });
+    const received = await Message.findAll({
+      where: { receiverId: req.userId },
+      attributes: ['senderId'],
+      group: ['senderId'],
+    });
+    const partnerIds = new Set<number>();
+    sent.forEach((m) => partnerIds.add(m.receiverId));
+    received.forEach((m) => partnerIds.add(m.senderId));
 
-    await Message.populate(conversations, { path: '_id', select: 'name avatar email role' });
-
+    const conversations = [];
+    for (const partnerId of partnerIds) {
+      const lastMessage = await Message.findOne({
+        where: {
+          [Op.or]: [
+            { senderId: req.userId, receiverId: partnerId },
+            { senderId: partnerId, receiverId: req.userId },
+          ],
+        },
+        order: [['createdAt', 'DESC']],
+      });
+      const unreadCount = await Message.count({
+        where: { senderId: partnerId, receiverId: req.userId, isRead: false },
+      });
+      if (lastMessage) {
+        conversations.push({ partnerId, lastMessage, unreadCount });
+      }
+    }
+    conversations.sort((a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime());
     res.json({ success: true, data: conversations });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

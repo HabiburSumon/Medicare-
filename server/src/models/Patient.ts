@@ -1,28 +1,47 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IPatient extends Document {
-  user: Types.ObjectId;
-  dateOfBirth?: Date;
-  gender?: 'male' | 'female' | 'other';
-  bloodGroup?: string;
-  address?: string;
-  medicalHistory?: string;
-  allergies?: string[];
-  emergencyContact?: string;
+interface PatientAttributes {
+  id: number;
+  userId: number;
+  dateOfBirth: Date | null;
+  gender: string | null;
+  bloodGroup: string | null;
+  address: string;
+  medicalHistory: string;
+  allergies: string; // JSON
+  emergencyContact: string;
 }
 
-const patientSchema = new Schema<IPatient>(
+interface PatientCreationAttributes extends Optional<PatientAttributes, 'id' | 'dateOfBirth' | 'gender' | 'bloodGroup' | 'address' | 'medicalHistory' | 'allergies' | 'emergencyContact'> {}
+
+class Patient extends Model<PatientAttributes, PatientCreationAttributes> implements PatientAttributes {
+  public id!: number;
+  public userId!: number;
+  public dateOfBirth!: Date | null;
+  public gender!: string | null;
+  public bloodGroup!: string | null;
+  public address!: string;
+  public medicalHistory!: string;
+  public allergies!: string;
+  public emergencyContact!: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Patient.init(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    dateOfBirth: { type: Date },
-    gender: { type: String, enum: ['male', 'female', 'other'] },
-    bloodGroup: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
-    address: { type: String, trim: true },
-    medicalHistory: { type: String, trim: true },
-    allergies: [{ type: String }],
-    emergencyContact: { type: String, trim: true },
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    userId: { type: DataTypes.INTEGER, allowNull: false, unique: true, references: { model: 'users', key: 'id' } },
+    dateOfBirth: { type: DataTypes.DATE, allowNull: true },
+    gender: { type: DataTypes.ENUM('male', 'female', 'other'), allowNull: true },
+    bloodGroup: { type: DataTypes.STRING(10), allowNull: true },
+    address: { type: DataTypes.STRING(500), defaultValue: '' },
+    medicalHistory: { type: DataTypes.TEXT, defaultValue: '' },
+    allergies: { type: DataTypes.TEXT, defaultValue: '[]' },
+    emergencyContact: { type: DataTypes.STRING(20), defaultValue: '' },
   },
-  { timestamps: true }
+  { sequelize, modelName: 'Patient', tableName: 'patients' }
 );
 
-export default mongoose.model<IPatient>('Patient', patientSchema);
+export default Patient;

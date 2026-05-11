@@ -1,61 +1,111 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import sequelize from '../config/database';
 
-export interface IUser extends Document {
+interface UserAttributes {
+  id: number;
   name: string;
   email: string;
   password: string;
   role: 'patient' | 'doctor' | 'admin' | 'pharmacist';
   phone: string;
-  avatar?: string;
+  avatar: string;
   isVerified: boolean;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const userSchema = new Schema<IUser>(
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'avatar' | 'isVerified' | 'isActive' | 'phone'> {}
+
+class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+  public id!: number;
+  public name!: string;
+  public email!: string;
+  public password!: string;
+  public role!: 'patient' | 'doctor' | 'admin' | 'pharmacist';
+  public phone!: string;
+  public avatar!: string;
+  public isVerified!: boolean;
+  public isActive!: boolean;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+
+  public async comparePassword(candidatePassword: string): Promise<boolean> {
+    return await bcrypt.compare(candidatePassword, this.password);
+  }
+}
+
+User.init(
   {
-    name: { type: String, required: [true, 'Name is required'], trim: true, maxlength: 100 },
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: { notEmpty: true },
+    },
     email: {
-      type: String,
-      required: [true, 'Email is required'],
+      type: DataTypes.STRING(255),
+      allowNull: false,
       unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
+      validate: { isEmail: true },
     },
     password: {
-      type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false,
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      validate: { len: [6, 255] },
     },
     role: {
-      type: String,
-      enum: ['patient', 'doctor', 'admin', 'pharmacist'],
-      default: 'patient',
+      type: DataTypes.ENUM('patient', 'doctor', 'admin', 'pharmacist'),
+      defaultValue: 'patient',
     },
-    phone: { type: String, trim: true },
-    avatar: { type: String, default: '' },
-    isVerified: { type: Boolean, default: false },
-    isActive: { type: Boolean, default: true },
+    phone: {
+      type: DataTypes.STRING(20),
+      defaultValue: '',
+    },
+    avatar: {
+      type: DataTypes.STRING(500),
+      defaultValue: '',
+    },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
-  { timestamps: true }
+  {
+    sequelize,
+    modelName: 'User',
+    tableName: 'users',
+    defaultScope: {
+      attributes: { exclude: ['password'] },
+    },
+    scopes: {
+      withPassword: {
+        attributes: { include: ['password'] },
+      },
+    },
+    hooks: {
+      beforeCreate: async (user: User) => {
+        if (user.password) {
+          const salt = await bcrypt.genSalt(12);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+      beforeUpdate: async (user: User) => {
+        if (user.changed('password')) {
+          const salt = await bcrypt.genSalt(12);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+    },
+  }
 );
 
-// Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(12);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-// Compare password method
-userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
-export default mongoose.model<IUser>('User', userSchema);
+export default User;
